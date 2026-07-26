@@ -27,7 +27,7 @@ object Stage {
 
     fun isBossStage(n: Int): Boolean = n > 0 && n % BOSS_EVERY == 0
 
-    fun stagesToNextBoss(n: Int): Int = (BOSS_EVERY - n % BOSS_EVERY) % BOSS_EVERY
+    fun stagesToNextBoss(n: Int): Int = if (n <= 0) BOSS_EVERY else (BOSS_EVERY - n % BOSS_EVERY) % BOSS_EVERY
 
     fun configFor(n: Int): StageConfig {
         val boss = bossFor(n)

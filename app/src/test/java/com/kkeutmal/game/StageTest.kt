@@ -93,4 +93,11 @@ class StageTest {
         assertEquals(0, Stage.stagesToNextBoss(5))
         assertEquals(3, Stage.stagesToNextBoss(12))
     }
+
+    @Test
+    fun `0 이하 스테이지는 다음 보스까지 5로 본다`() {
+        assertEquals(5, Stage.stagesToNextBoss(0))
+        assertEquals(5, Stage.stagesToNextBoss(-1))
+        assertEquals(0, Stage.stagesToNextBoss(5))
+    }
 }

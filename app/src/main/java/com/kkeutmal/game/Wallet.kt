@@ -84,26 +84,27 @@ object Wallet {
         return (commons.take(count) + AvatarCatalog.DEFAULT_ID).toSet()
     }
 
-    /** 첫 실행 때 지급하는 힌트 아이템 수 */
-    const val STARTER_HINTS = 3000
+    /** 첫 실행 때 아이템 종류마다 지급하는 개수 */
+    const val STARTER_ITEM_COUNT = 3
 
     /**
-     * 지급 플래그 키. 지급량을 바꾸면 이 키의 뒤 숫자도 함께 올려서
-     * 이미 한 번 받은 사람도 새 지급량을 받게 한다.
+     * 지급 플래그 키. 지급 내용을 바꾸면 이 키의 뒤 숫자도 함께 올려서
+     * 이미 한 번 받은 사람도 새 지급을 받게 한다.
      */
-    private const val STARTER_FLAG = "starter_granted_v2"
+    private const val STARTER_FLAG = "starter_granted_v3"
 
     /**
-     * 처음 시작하는 플레이어에게 힌트 아이템을 넉넉히 지급한다.
+     * 처음 시작하는 플레이어에게 모든 아이템을 종류별로 지급한다.
      * 플래그로 한 번만 실행되며, 이미 갖고 있던 개수에 더한다.
      */
     fun ensureStarterGrant(ctx: Context) {
         val prefs = p(ctx)
         if (prefs.getBoolean(STARTER_FLAG, false)) return
-        prefs.edit()
-            .putInt("item_hint", itemCount(ctx, "item_hint") + STARTER_HINTS)
-            .putBoolean(STARTER_FLAG, true)
-            .apply()
+        val editor = prefs.edit()
+        for (item in ITEMS) {
+            editor.putInt(item.id, itemCount(ctx, item.id) + STARTER_ITEM_COUNT)
+        }
+        editor.putBoolean(STARTER_FLAG, true).apply()
     }
 
     // ---------- 마이그레이션 ----------

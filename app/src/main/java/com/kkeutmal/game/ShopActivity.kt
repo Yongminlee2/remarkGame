@@ -36,33 +36,33 @@ class ShopActivity : AppCompatActivity() {
     private fun buildAvatars() {
         val grid = binding.gridAvatars
         grid.removeAllViews()
-        val owned = Wallet.ownedAvatars(this)
-        val selected = Wallet.selectedAvatar(this)
+        val owned = Wallet.ownedAvatarIds(this)
+        val selected = Wallet.selectedAvatarId(this)
 
-        for (avatar in Wallet.AVATARS) {
+        for (def in AvatarCatalog.ALL.filter { it.grade == AvatarGrade.COMMON }) {
+            val isOwned = def.id in owned
+            val price = (def.unlock as Unlock.Coin).price
             val cell = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 setPadding(dp(6))
                 background = ContextCompat.getDrawable(this@ShopActivity,
-                    if (avatar.emoji == selected) R.drawable.bg_cell_selected else R.drawable.bg_input)
+                    if (def.id == selected) R.drawable.bg_cell_selected else R.drawable.bg_input)
             }
-            cell.addView(TextView(this).apply {
-                text = avatar.emoji
-                textSize = 30f
-                gravity = Gravity.CENTER
+            cell.addView(AvatarView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(dp(48), dp(48))
+                bind(def, locked = !isOwned)
             })
             cell.addView(TextView(this).apply {
-                val isOwned = avatar.emoji in owned
                 text = when {
-                    avatar.emoji == selected -> "사용 중"
+                    def.id == selected -> "사용 중"
                     isOwned -> "보유"
-                    else -> "${avatar.price}🪙"
+                    else -> "${price}🪙"
                 }
                 textSize = 11f
                 gravity = Gravity.CENTER
                 setTextColor(ContextCompat.getColor(this@ShopActivity,
-                    if (avatar.emoji == selected) R.color.accent2 else R.color.text_dim))
+                    if (def.id == selected) R.color.accent2 else R.color.text_dim))
             })
             val lp = GridLayout.LayoutParams(
                 GridLayout.spec(GridLayout.UNDEFINED, 1f),
@@ -72,30 +72,31 @@ class ShopActivity : AppCompatActivity() {
                 setMargins(dp(4), dp(4), dp(4), dp(4))
             }
             cell.layoutParams = lp
-            cell.setOnClickListener { onAvatarTap(avatar, avatar.emoji in owned) }
+            cell.setOnClickListener { onAvatarTap(def, isOwned) }
             grid.addView(cell)
         }
     }
 
-    private fun onAvatarTap(avatar: Wallet.Avatar, owned: Boolean) {
+    private fun onAvatarTap(def: AvatarDef, owned: Boolean) {
+        val price = (def.unlock as Unlock.Coin).price
         if (owned) {
-            Wallet.selectAvatar(this, avatar.emoji)
+            Wallet.selectAvatarId(this, def.id)
             refresh()
             return
         }
-        if (Wallet.coins(this) < avatar.price) {
+        if (Wallet.coins(this) < price) {
             MaterialAlertDialogBuilder(this)
-                .setMessage("코인이 부족해요 (${avatar.price}🪙 필요)")
+                .setMessage("코인이 부족해요 (${price}🪙 필요)")
                 .setPositiveButton("확인", null).show()
             return
         }
         MaterialAlertDialogBuilder(this)
-            .setTitle("${avatar.emoji} 아바타 구매")
-            .setMessage("${avatar.price}🪙 로 구매할까요?")
+            .setTitle("${def.name} 구매")
+            .setMessage("${price}🪙 로 구매할까요?")
             .setPositiveButton("구매") { _, _ ->
-                if (Wallet.spendCoins(this, avatar.price)) {
-                    Wallet.ownAvatar(this, avatar.emoji)
-                    Wallet.selectAvatar(this, avatar.emoji)
+                if (Wallet.spendCoins(this, price)) {
+                    Wallet.ownAvatarId(this, def.id)
+                    Wallet.selectAvatarId(this, def.id)
                     refresh()
                 }
             }

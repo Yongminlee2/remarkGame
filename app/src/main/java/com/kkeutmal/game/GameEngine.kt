@@ -69,14 +69,14 @@ class GameEngine(val level: AiLevel, val noTimer: Boolean, val bossRules: List<B
         return false
     }
 
-    /** word 뒤에 이을 수 있는(아직 안 쓴) 단어 수. cap 에서 세기를 멈춘다. */
+    /** word 뒤에 이을 수 있는(아직 안 쓴, 보스 규칙도 통과하는) 단어 수. cap 에서 세기를 멈춘다. */
     fun followUpCount(word: String, cap: Int = 60): Int {
         val starts = Dueum.variants(word.last())
         var n = 0
         for (c in starts) {
             for (i in WordDict.range(c)) {
                 val w = WordDict.words[i]
-                if (w != word && w !in used) {
+                if (w != word && w !in used && (bossRules.isEmpty() || bossRules.acceptsWord(w))) {
                     n++
                     if (n >= cap) return n
                 }
@@ -124,6 +124,11 @@ class GameEngine(val level: AiLevel, val noTimer: Boolean, val bossRules: List<B
         if (bossRules.isNotEmpty()) {
             val fallback = WordDict.commonList.filter { it !in used && bossRules.acceptsWord(it) }
             if (fallback.isNotEmpty()) return fallback[rng.nextInt(fallback.size)]
+        }
+        if (bossRules.isNotEmpty() && !bossRules.acceptsWord("사과")) {
+            for (w in WordDict.words) {
+                if (w !in used && bossRules.acceptsWord(w)) return w
+            }
         }
         return "사과"
     }

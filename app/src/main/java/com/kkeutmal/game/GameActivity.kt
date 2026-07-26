@@ -26,6 +26,8 @@ class GameActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_LEVEL = "level"
         const val EXTRA_NO_TIMER = "no_timer"
+        const val EXTRA_MODE = "mode"
+        const val EXTRA_STAGE = "stage"
         private const val REQ_MIC = 71
     }
 
@@ -38,6 +40,12 @@ class GameActivity : AppCompatActivity() {
     private var vibrator: Vibrator? = null
     private lateinit var voice: VoiceInput
 
+    private var mode = GameMode.FREE
+    private var stageNumber = 0
+    private var stageConfig: StageConfig? = null
+    private var voiceWordCount = 0
+    private var longWordCount = 0
+
     private var timer: CountDownTimer? = null
     private var remainingMs = 0L
     private var secondsLeft = 0
@@ -49,19 +57,38 @@ class GameActivity : AppCompatActivity() {
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val level = runCatching {
-            AiLevel.valueOf(intent.getStringExtra(EXTRA_LEVEL) ?: AiLevel.NORMAL.name)
-        }.getOrDefault(AiLevel.NORMAL)
-        val noTimer = intent.getBooleanExtra(EXTRA_NO_TIMER, false)
-        engine = GameEngine(level, noTimer)
-        binding.tvDifficulty.text = level.label + if (noTimer) " ∞" else ""
+        mode = runCatching { GameMode.valueOf(intent.getStringExtra(EXTRA_MODE) ?: "FREE") }
+            .getOrDefault(GameMode.FREE)
+
+        if (mode == GameMode.ADVENTURE) {
+            stageNumber = intent.getIntExtra(EXTRA_STAGE, 1)
+            val cfg = Stage.configFor(stageNumber)
+            stageConfig = cfg
+            engine = GameEngine(cfg.aiLevel, noTimer = false, bossRules = cfg.boss?.rules ?: emptyList())
+            binding.tvDifficulty.text = "${stageNumber}스테이지"
+            binding.tvGoal.visibility = View.VISIBLE
+            binding.tvGoal.text = "목표 ${cfg.targetRounds}라운드"
+            cfg.boss?.let { boss ->
+                binding.bossBanner.visibility = View.VISIBLE
+                val ruleText = boss.rules.rejectionMessage()
+                binding.bossBanner.text =
+                    if (ruleText.isEmpty()) "👹 ${boss.name}" else "👹 ${boss.name} — $ruleText"
+            }
+        } else {
+            val level = runCatching {
+                AiLevel.valueOf(intent.getStringExtra(EXTRA_LEVEL) ?: AiLevel.NORMAL.name)
+            }.getOrDefault(AiLevel.NORMAL)
+            val noTimer = intent.getBooleanExtra(EXTRA_NO_TIMER, false)
+            engine = GameEngine(level, noTimer)
+            binding.tvDifficulty.text = level.label + if (noTimer) " ∞" else ""
+        }
 
         audio = AudioManager(this)
         audio.preload()
         audio.startBgm()
         vibrator = ContextCompat.getSystemService(this, Vibrator::class.java)
 
-        adapter.playerAvatar = Wallet.selectedAvatar(this)
+        adapter.playerAvatarId = Wallet.selectedAvatarId(this)
         binding.recycler.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = true }
         binding.recycler.adapter = adapter
 
@@ -73,6 +100,7 @@ class GameActivity : AppCompatActivity() {
             binding.etWord.hint = if (on) "듣는 중… 말씀하세요!" else getString(R.string.input_hint)
         }
         voice.onResult = { word ->
+            voiceWordCount++
             binding.etWord.setText(word)
             binding.etWord.setSelection(word.length)
             submit()
@@ -153,7 +181,7 @@ class GameActivity : AppCompatActivity() {
         }
         setInputEnabled(true)
         binding.etWord.requestFocus()
-        startTimer(engine.timerSec * 1000L)
+        startTimer((stageConfig?.timerSec ?: engine.timerSec) * 1000L)
     }
 
     private fun submit() {
@@ -175,6 +203,14 @@ class GameActivity : AppCompatActivity() {
                 adapter.add(ChatItem.Player(verdict.word, points, WordDict.meaning(verdict.word)))
                 scrollToEnd()
                 updateHeader()
+                if (verdict.word.length >= 4) longWordCount++
+                val cfg = stageConfig
+                if (cfg != null && engine.round >= cfg.targetRounds) {
+                    adapter.add(ChatItem.Sys("🎉 ${cfg.targetRounds}라운드 달성! 스테이지 클리어"))
+                    scrollToEnd()
+                    endGame(win = true, reason = "${stageNumber}스테이지 클리어")
+                    return
+                }
                 aiTurn()
             }
         }
@@ -262,7 +298,7 @@ class GameActivity : AppCompatActivity() {
             binding.tvTimer.setTextColor(ContextCompat.getColor(this, R.color.timer_ok))
             return
         }
-        val totalMs = engine.timerSec * 1000L
+        val totalMs = (stageConfig?.timerSec ?: engine.timerSec) * 1000L
         binding.timerBar.max = 1000
         timer = object : CountDownTimer(ms, 100L) {
             override fun onTick(left: Long) {
@@ -382,10 +418,24 @@ class GameActivity : AppCompatActivity() {
             .putInt("best_round", maxOf(bestRound, engine.round))
             .apply()
 
-        val coinsEarned = engine.score / 10 + if (win) 20 else 0
-        if (coinsEarned > 0) Wallet.addCoins(this, coinsEarned)
+        val outcome = GameOutcome(
+            mode = mode,
+            won = win,
+            score = engine.score,
+            rounds = engine.round,
+            stage = stageNumber,
+            isBoss = stageConfig?.boss != null,
+            doubleReward = false
+        )
+        val reward = GameResult.rewardFor(outcome)
+        if (reward.coins > 0) Wallet.addCoins(this, reward.coins)
+        val levelsGained = if (reward.xp > 0) Wallet.addXp(this, reward.xp) else 0
+        Wallet.recordRounds(this, engine.round)
+        if (mode == GameMode.ADVENTURE && win) {
+            Wallet.setStage(this, stageNumber + 1)
+        }
 
-        handler.postDelayed({ showResultDialog(win, reason, newBest, coinsEarned) }, 700L)
+        handler.postDelayed({ showResultDialog(win, reason, newBest, reward, levelsGained) }, 700L)
     }
 
     private fun vibrate(vararg ms: Long) {
@@ -397,7 +447,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    private fun showResultDialog(win: Boolean, reason: String, newBest: Boolean, coinsEarned: Int) {
+    private fun showResultDialog(win: Boolean, reason: String, newBest: Boolean, reward: Reward, levelsGained: Int) {
         if (isDestroyed || isFinishing) return
         val b = DialogResultBinding.inflate(LayoutInflater.from(this))
         b.tvEmoji.text = if (win) "🏆" else "💀"
@@ -406,9 +456,17 @@ class GameActivity : AppCompatActivity() {
         b.tvStatRound.text = "${engine.round}라운드"
         b.tvStatScore.text = "${engine.score}점"
         b.tvNewBest.visibility = if (newBest && engine.score > 0) View.VISIBLE else View.GONE
-        if (coinsEarned > 0) {
+        if (reward.xp > 0) {
+            b.tvXpEarned.visibility = View.VISIBLE
+            b.tvXpEarned.text = "✨ +${reward.xp} XP"
+        }
+        if (levelsGained > 0) {
+            b.tvLevelUp.visibility = View.VISIBLE
+            b.tvLevelUp.text = "🎊 레벨 ${Wallet.level(this)} 달성!"
+        }
+        if (reward.coins > 0) {
             b.tvCoinsEarned.visibility = View.VISIBLE
-            b.tvCoinsEarned.text = "🪙 +$coinsEarned 코인 획득!"
+            b.tvCoinsEarned.text = "🪙 +${reward.coins} 코인"
         } else {
             b.tvCoinsEarned.visibility = View.GONE
         }

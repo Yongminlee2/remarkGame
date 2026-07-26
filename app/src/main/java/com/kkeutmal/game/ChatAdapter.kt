@@ -19,7 +19,7 @@ sealed class ChatItem {
 class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val items = ArrayList<ChatItem>()
-    var playerAvatar: String = Wallet.DEFAULT_AVATAR
+    var playerAvatarId: String = AvatarCatalog.DEFAULT_ID
 
     fun add(item: ChatItem) {
         items.add(item)
@@ -69,7 +69,7 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val b = (holder as PlayerHolder).b
                 b.tvWord.text = item.word
                 b.tvPoints.text = "+${item.points}점"
-                b.tvAvatar.text = playerAvatar
+                b.avatarView.bind(AvatarCatalog.byId(playerAvatarId))
                 bindMeaning(b.tvMeaning, item.meaning)
             }
             is ChatItem.Sys -> (holder as SysHolder).b.tvText.text = item.text

@@ -9,7 +9,7 @@ enum class AiLevel(val label: String, val timerSec: Int, val desc: String) {
     HARD("어려움", 12, "AI가 사전 전체로 압박해요 (한방단어 주의!)")
 }
 
-class GameEngine(val level: AiLevel, val noTimer: Boolean) {
+class GameEngine(val level: AiLevel, val noTimer: Boolean, val bossRules: List<BossRule> = emptyList()) {
 
     sealed class Verdict {
         data class Ok(val word: String) : Verdict()
@@ -53,10 +53,17 @@ class GameEngine(val level: AiLevel, val noTimer: Boolean) {
         return out
     }
 
+    /** 보스 규칙을 통과하는 후보만 남긴다. 규칙이 없으면 candidates 와 같다. */
+    fun candidatesUnderRules(starts: Set<Char>, common: Boolean): List<String> {
+        val base = candidates(starts, common)
+        return if (bossRules.isEmpty()) base else base.filter { bossRules.acceptsWord(it) }
+    }
+
     fun hasAnyCandidate(starts: Set<Char>): Boolean {
         for (c in starts) {
             for (i in WordDict.range(c)) {
-                if (WordDict.words[i] !in used) return true
+                val w = WordDict.words[i]
+                if (w !in used && (bossRules.isEmpty() || bossRules.acceptsWord(w))) return true
             }
         }
         return false
@@ -85,6 +92,9 @@ class GameEngine(val level: AiLevel, val noTimer: Boolean) {
         val starts = allowedStarts()
         if (starts != null && word[0] !in starts) return Verdict.Bad("${allowedStartsLabel()}(으)로 시작해야 해요")
         if (word in used) return Verdict.Bad("이미 나온 단어예요")
+        if (bossRules.isNotEmpty() && !bossRules.acceptsWord(word)) {
+            return Verdict.Bad("${bossRules.rejectionMessage()}만 낼 수 있어요")
+        }
         if (!WordDict.contains(word)) return Verdict.Bad("사전에 없는 단어예요")
         return Verdict.Ok(word)
     }
@@ -103,11 +113,17 @@ class GameEngine(val level: AiLevel, val noTimer: Boolean) {
         lastWord = word
     }
 
-    /** AI 첫 단어: 잇기 여지가 넉넉한 짧은 상용 명사 */
+    /** AI 첫 단어: 잇기 여지가 넉넉한 짧은 상용 명사. 보스 규칙이 있으면 그 규칙도 지킨다. */
     fun openingWord(): String {
         repeat(60) {
             val w = WordDict.commonList[rng.nextInt(WordDict.commonList.size)]
-            if (w.length in 2..3 && w !in used && followUpCount(w, 40) >= 30) return w
+            if (w.length in 2..3 && w !in used && followUpCount(w, 40) >= 30 &&
+                (bossRules.isEmpty() || bossRules.acceptsWord(w))
+            ) return w
+        }
+        if (bossRules.isNotEmpty()) {
+            val fallback = WordDict.commonList.filter { it !in used && bossRules.acceptsWord(it) }
+            if (fallback.isNotEmpty()) return fallback[rng.nextInt(fallback.size)]
         }
         return "사과"
     }
@@ -115,9 +131,9 @@ class GameEngine(val level: AiLevel, val noTimer: Boolean) {
     /** 아이템: 낼 수 있는 단어 힌트 */
     fun hintWord(): String? {
         val starts = allowedStarts() ?: return null
-        val commonPool = candidates(starts, common = true).filter { followUpCount(it, 4) >= 2 }
+        val commonPool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 4) >= 2 }
         if (commonPool.isNotEmpty()) return commonPool[rng.nextInt(commonPool.size)]
-        val pool = candidates(starts, common = false)
+        val pool = candidatesUnderRules(starts, common = false)
         return if (pool.isEmpty()) null else pool[rng.nextInt(pool.size)]
     }
 
@@ -152,28 +168,28 @@ class GameEngine(val level: AiLevel, val noTimer: Boolean) {
         return when (level) {
             AiLevel.VERY_EASY -> {
                 // 한방단어(이을 단어 0개) 절대 금지 + 플레이어가 잇기 아주 좋은 단어만
-                var pool = candidates(starts, common = true).filter { followUpCount(it, 12) >= 8 }
-                if (pool.isEmpty()) pool = candidates(starts, common = true).filter { followUpCount(it, 2) >= 1 }
+                var pool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 12) >= 8 }
+                if (pool.isEmpty()) pool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 2) >= 1 }
                 if (pool.isEmpty()) null
                 else sample(pool, 10).maxByOrNull { followUpCount(it, 60) }
             }
             AiLevel.EASY -> {
-                val pool = candidates(starts, common = true).filter { followUpCount(it, 8) >= 5 }
+                val pool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 8) >= 5 }
                 if (pool.isEmpty()) null
                 else sample(pool, 10).maxByOrNull { followUpCount(it, 60) }
             }
             AiLevel.NORMAL -> {
-                var pool = candidates(starts, common = true).filter { followUpCount(it, 4) >= 3 }
+                var pool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 4) >= 3 }
                 if (pool.isEmpty()) {
-                    pool = candidates(starts, common = false).filter { it.length <= 4 && followUpCount(it, 4) >= 3 }
+                    pool = candidatesUnderRules(starts, common = false).filter { it.length <= 4 && followUpCount(it, 4) >= 3 }
                 }
                 if (pool.isEmpty()) null else pool[rng.nextInt(pool.size)]
             }
             AiLevel.HARD -> {
-                val pool = candidates(starts, common = false)
+                val pool = candidatesUnderRules(starts, common = false)
                 if (pool.isEmpty()) return null
                 val sampled = sample(pool, 40)
-                val canKill = round >= 6
+                val canKill = round >= 6 || BossRule.AI_HANBANG in bossRules
                 val scored = sampled.map { it to followUpCount(it, 30) }
                 val safe = scored.filter { it.second > 0 }
                 val killers = scored.filter { it.second == 0 }

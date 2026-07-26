@@ -14,6 +14,7 @@ class AdventureActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAdventureBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySystemBarInsets()
 
         binding.btnBack.setOnClickListener { finish() }
         binding.btnChallenge.setOnClickListener {

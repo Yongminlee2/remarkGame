@@ -19,6 +19,7 @@ class CollectionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityCollectionBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySystemBarInsets()
         binding.btnBack.setOnClickListener { finish() }
         render()
     }

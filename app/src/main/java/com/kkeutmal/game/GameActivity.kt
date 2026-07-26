@@ -57,6 +57,7 @@ class GameActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySystemBarInsets(includeIme = true)
 
         mode = runCatching { GameMode.valueOf(intent.getStringExtra(EXTRA_MODE) ?: "FREE") }
             .getOrDefault(GameMode.FREE)

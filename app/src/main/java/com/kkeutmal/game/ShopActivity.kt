@@ -21,6 +21,7 @@ class ShopActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityShopBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySystemBarInsets()
         binding.btnBack.setOnClickListener { finish() }
         refresh()
     }

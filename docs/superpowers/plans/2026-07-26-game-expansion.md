@@ -13,7 +13,13 @@
 - compileSdk 36 / minSdk 26 / targetSdk 36, Java 11 (`sourceCompatibility`/`targetCompatibility`)
 - 앱은 **완전 오프라인**이다. INTERNET 권한을 추가하지 않는다. 모든 에셋은 앱에 번들한다.
 - 빌드: `gradlew.bat :app:assembleDebug` (JDK 경로는 `gradle.properties`의 `org.gradle.java.home`이 지정하므로 JAVA_HOME 불필요)
-- 단위 테스트: `gradlew.bat :app:testDebugUnitTest`
+- **단위 테스트는 반드시 `GRADLE_USER_HOME=C:/gradle-home` 을 붙여 실행한다:**
+  `GRADLE_USER_HOME=C:/gradle-home ./gradlew.bat :app:testDebugUnitTest`
+  이 PC의 사용자 홈이 `C:\Users\사용자`(한글)라서 기본 Gradle 홈을 쓰면 테스트 워커 JVM이
+  클래스패스를 읽지 못하고 `ClassNotFoundException: ...GradleWorkerMain` 으로 죽는다.
+  `C:/gradle-home`에 Gradle 배포본 사본이 이미 있다. 빌드(`assembleDebug`)는 이 변수 없이도 된다.
+- 테스트 결과는 `app/build/test-results/testDebugUnitTest/*.xml` 의 `tests=`/`failures=` 로 확인한다.
+  "BUILD SUCCESSFUL" 만으로는 테스트가 실제로 돌았는지 알 수 없다.
 - 실기기 설치: `"C:/Users/사용자/AppData/Local/Android/Sdk/platform-tools/adb.exe" install -r "C:/workAndroid/WordChain/끝말잇기-v1.0.apk"`
 - 실기기 스크린샷은 **bash에서** 찍는다. PowerShell 리다이렉트는 바이너리를 깨뜨린다:
   `"$ADB" exec-out screencap -p > out.png`

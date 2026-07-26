@@ -85,18 +85,24 @@ object Wallet {
     }
 
     /** 첫 실행 때 지급하는 힌트 아이템 수 */
-    const val STARTER_HINTS = 50
+    const val STARTER_HINTS = 3000
+
+    /**
+     * 지급 플래그 키. 지급량을 바꾸면 이 키의 뒤 숫자도 함께 올려서
+     * 이미 한 번 받은 사람도 새 지급량을 받게 한다.
+     */
+    private const val STARTER_FLAG = "starter_granted_v2"
 
     /**
      * 처음 시작하는 플레이어에게 힌트 아이템을 넉넉히 지급한다.
-     * `starter_granted` 플래그로 한 번만 실행되며, 이미 갖고 있던 개수에 더한다.
+     * 플래그로 한 번만 실행되며, 이미 갖고 있던 개수에 더한다.
      */
     fun ensureStarterGrant(ctx: Context) {
         val prefs = p(ctx)
-        if (prefs.getBoolean("starter_granted", false)) return
+        if (prefs.getBoolean(STARTER_FLAG, false)) return
         prefs.edit()
             .putInt("item_hint", itemCount(ctx, "item_hint") + STARTER_HINTS)
-            .putBoolean("starter_granted", true)
+            .putBoolean(STARTER_FLAG, true)
             .apply()
     }
 

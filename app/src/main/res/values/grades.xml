@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="grade_common">#6A6B6C</color>
+    <color name="grade_rare">#57C1FF</color>
+    <color name="grade_epic">#A05CFF</color>
+    <color name="grade_legendary">#FFC533</color>
+
+    <color name="rank_bronze">#CD7F32</color>
+    <color name="rank_silver">#C0C0C0</color>
+    <color name="rank_gold">#FFC533</color>
+    <color name="rank_platinum">#4ADEBB</color>
+    <color name="rank_diamond">#57C1FF</color>
+    <color name="rank_master">#A05CFF</color>
+    <color name="rank_grandmaster">#FF6161</color>
+</resources>

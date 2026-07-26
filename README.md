@@ -40,6 +40,8 @@ gradlew.bat :app:assembleDebug
 | 단어 DB(확장) | [JJoriping/KKuTu](https://github.com/JJoriping/KKuTu) db.sql 의 kkutu_ko 테이블 (끄투 계열 게임 사전) | 단어 목록은 저작권 비보호 |
 | 뜻풀이 | [acidsound/korean_wordlist](https://github.com/acidsound/korean_wordlist) korean_dictionary1/2.json | 표준국어대사전 기반 |
 | 효과음·BGM | 전부 자체 신스 합성 (`AudioGen.java`/`BgmGen.java` → ffmpeg ogg 인코딩) | 자작 |
+| 아바타 그래픽 | [Kenney — Shape Characters](https://kenney.nl/assets/shape-characters) | CC0 1.0 |
+| UI 아이콘 | [Kenney — Game Icons](https://kenney.nl/assets/game-icons) | CC0 1.0 |
 | 디자인 참고 | [getdesign.md](https://getdesign.md) / [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) Raycast DESIGN.md | 참고 |
 
 ## 아키텍처

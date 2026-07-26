@@ -115,6 +115,7 @@ object Wallet {
     }
 
     fun selectAvatarId(ctx: Context, id: String) {
+        ensureMigrated(ctx)
         p(ctx).edit().putString("sel_avatar_v2", id).apply()
     }
 

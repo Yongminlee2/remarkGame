@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.KKeutmal" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">@color/text_on_accent</item>
+        <item name="colorSecondary">@color/accent2</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="android:colorBackground">@color/bg_top</item>
+        <item name="android:windowBackground">@drawable/bg_gradient</item>
+        <item name="android:statusBarColor">@color/bg_top</item>
+        <item name="android:navigationBarColor">@color/bg_bottom</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+</resources>

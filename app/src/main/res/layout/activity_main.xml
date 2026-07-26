@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvEmblem"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:layout_marginTop="36dp"
+            android:background="@drawable/bg_emblem"
+            android:gravity="center"
+            android:text="끝"
+            android:textColor="@color/text_on_accent"
+            android:textSize="40sp"
+            android:fontFamily="sans-serif-black"
+            android:elevation="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/app_name"
+            android:textColor="@color/text_primary"
+            android:textSize="42sp"
+            android:letterSpacing="0.04"
+            android:fontFamily="sans-serif-black" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/subtitle"
+            android:textColor="@color/text_dim"
+            android:textSize="15sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="20dp"
+            app:strokeColor="@color/surface_stroke"
+            app:strokeWidth="1dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="@string/best_label"
+                        android:textColor="@color/text_dim"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tvBest"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="아직 기록 없음"
+                        android:textColor="@color/accent2"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tvCoins"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="🪙 0 코인"
+                        android:textColor="@color/warn"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnShop"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="16dp"
+                        android:text="🛍 상점"
+                        android:textSize="13sp"
+                        app:backgroundTint="@color/chip_bg"
+                        app:cornerRadius="20dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:text="@string/difficulty_label"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleDifficulty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnVeryEasy"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1.2"
+                android:layout_height="44dp"
+                android:text="매우쉬움"
+                android:textSize="12sp"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                android:paddingHorizontal="2dp"
+                app:strokeColor="@color/surface_stroke" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEasy"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="44dp"
+                android:text="쉬움"
+                android:textSize="12sp"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                android:paddingHorizontal="2dp"
+                app:strokeColor="@color/surface_stroke" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNormal"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="44dp"
+                android:text="보통"
+                android:textSize="12sp"
+                app:strokeColor="@color/surface_stroke" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnHard"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="44dp"
+                android:text="어려움"
+                android:textSize="12sp"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                android:paddingHorizontal="2dp"
+                app:strokeColor="@color/surface_stroke" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <TextView
+            android:id="@+id/tvDifficultyDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp"
+            android:text="제한시간 20초" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swNoTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="  ⏱ 제한시간 없이 느긋하게  "
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="62dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/start_game"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/cta_text"
+            app:backgroundTint="@color/cta_bg"
+            app:cornerRadius="31dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="#10FFFFFF"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rules_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:lineSpacingExtra="5dp"
+                    android:text="@string/rules_body"
+                    android:textColor="@color/text_dim"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</ScrollView>

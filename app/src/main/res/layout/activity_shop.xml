@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBack"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:text="←"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="상점"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
+                android:fontFamily="sans-serif-black" />
+
+            <TextView
+                android:id="@+id/tvShopCoins"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bubble_sys"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="🪙 0"
+                android:textColor="@color/warn"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="아바타"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp" />
+
+        <GridLayout
+            android:id="@+id/gridAvatars"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:columnCount="4" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="아이템 (게임 중 사용)"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:id="@+id/listItems"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="vertical" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="center"
+            android:text="코인은 게임 점수로 얻어요 (점수 ÷ 10, 승리 시 +20)"
+            android:textColor="@color/text_dim"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

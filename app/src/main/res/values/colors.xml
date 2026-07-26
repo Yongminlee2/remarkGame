@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Raycast식 서피스 사다리: 근흑 캔버스 → 단계별 밝은 서피스 -->
+    <color name="bg_top">#07080B</color>
+    <color name="bg_bottom">#150F28</color>
+    <color name="surface">#111225</color>
+    <color name="surface_stroke">#14FFFFFF</color><!-- hairline 8% -->
+    <color name="input_bg">#0D0E1C</color>
+    <color name="chip_bg">#191A30</color>
+
+    <color name="accent">#7C6CFF</color>
+    <color name="accent_dark">#5B4CD6</color>
+    <color name="accent2">#59D499</color>
+    <color name="accent2_dark">#1F8F6A</color>
+    <color name="accent2_soft">#2659D499</color><!-- 15% soft container -->
+    <color name="player_grad_start">#7C6CFF</color>
+    <color name="player_grad_end">#A05CFF</color>
+    <color name="mic_listening">#FF6161</color>
+
+    <color name="text_primary">#F4F4F6</color>
+    <color name="text_dim">#9C9FB8</color>
+    <color name="text_on_accent">#FFFFFF</color>
+
+    <color name="cta_bg">#FFFFFF</color>
+    <color name="cta_text">#0B0B10</color>
+
+    <color name="error">#FF6161</color>
+    <color name="warn">#FFC533</color>
+    <color name="timer_ok">#59D499</color>
+</resources>

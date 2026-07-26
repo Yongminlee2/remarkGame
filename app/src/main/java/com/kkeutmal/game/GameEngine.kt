@@ -1,0 +1,199 @@
+package com.kkeutmal.game
+
+import kotlin.random.Random
+
+enum class AiLevel(val label: String, val timerSec: Int, val desc: String) {
+    VERY_EASY("매우쉬움", 60, "AI가 쉬운 단어만 내고 한방단어는 절대 안 써요"),
+    EASY("쉬움", 45, "AI가 잇기 좋은 단어를 골라줘요"),
+    NORMAL("보통", 20, "AI가 무난하게 받아쳐요"),
+    HARD("어려움", 12, "AI가 사전 전체로 압박해요 (한방단어 주의!)")
+}
+
+class GameEngine(val level: AiLevel, val noTimer: Boolean) {
+
+    sealed class Verdict {
+        data class Ok(val word: String) : Verdict()
+        data class Bad(val message: String) : Verdict()
+    }
+
+    val used = HashSet<String>()
+    var lastWord: String? = null
+        private set
+    private var prevWord: String? = null // lastWord 직전 단어 (아이템 '단어 바꾸기'용)
+    var round = 0
+        private set
+    var score = 0
+        private set
+
+    private val rng = Random(System.nanoTime())
+
+    val timerSec: Int get() = level.timerSec
+
+    fun allowedStarts(): Set<Char>? = lastWord?.let { Dueum.variants(it.last()) }
+
+    fun allowedStartsLabel(): String {
+        val starts = allowedStarts() ?: return ""
+        val list = starts.toList()
+        return if (list.size == 1) "'${list[0]}'"
+        else "'${list[0]}' (또는 '${list.drop(1).joinToString("', '")}')"
+    }
+
+    fun candidates(starts: Set<Char>, common: Boolean): List<String> {
+        val out = ArrayList<String>()
+        if (common) {
+            for (c in starts) WordDict.commonByFirst[c]?.forEach { if (it !in used) out.add(it) }
+        } else {
+            for (c in starts) {
+                for (i in WordDict.range(c)) {
+                    val w = WordDict.words[i]
+                    if (w !in used) out.add(w)
+                }
+            }
+        }
+        return out
+    }
+
+    fun hasAnyCandidate(starts: Set<Char>): Boolean {
+        for (c in starts) {
+            for (i in WordDict.range(c)) {
+                if (WordDict.words[i] !in used) return true
+            }
+        }
+        return false
+    }
+
+    /** word 뒤에 이을 수 있는(아직 안 쓴) 단어 수. cap 에서 세기를 멈춘다. */
+    fun followUpCount(word: String, cap: Int = 60): Int {
+        val starts = Dueum.variants(word.last())
+        var n = 0
+        for (c in starts) {
+            for (i in WordDict.range(c)) {
+                val w = WordDict.words[i]
+                if (w != word && w !in used) {
+                    n++
+                    if (n >= cap) return n
+                }
+            }
+        }
+        return n
+    }
+
+    fun validate(raw: String): Verdict {
+        val word = raw.trim()
+        if (word.isEmpty()) return Verdict.Bad("단어를 입력해 주세요")
+        if (!Dueum.isHangul(word) || word.length < 2) return Verdict.Bad("두 글자 이상 한글 단어만 낼 수 있어요")
+        val starts = allowedStarts()
+        if (starts != null && word[0] !in starts) return Verdict.Bad("${allowedStartsLabel()}(으)로 시작해야 해요")
+        if (word in used) return Verdict.Bad("이미 나온 단어예요")
+        if (!WordDict.contains(word)) return Verdict.Bad("사전에 없는 단어예요")
+        return Verdict.Ok(word)
+    }
+
+    fun acceptPlayer(word: String, secondsLeft: Int): Int {
+        applyWord(word)
+        round++
+        val points = 10 + word.length * 2 + (if (noTimer) 0 else secondsLeft)
+        score += points
+        return points
+    }
+
+    fun applyWord(word: String) {
+        used.add(word)
+        prevWord = lastWord
+        lastWord = word
+    }
+
+    /** AI 첫 단어: 잇기 여지가 넉넉한 짧은 상용 명사 */
+    fun openingWord(): String {
+        repeat(60) {
+            val w = WordDict.commonList[rng.nextInt(WordDict.commonList.size)]
+            if (w.length in 2..3 && w !in used && followUpCount(w, 40) >= 30) return w
+        }
+        return "사과"
+    }
+
+    /** 아이템: 낼 수 있는 단어 힌트 */
+    fun hintWord(): String? {
+        val starts = allowedStarts() ?: return null
+        val commonPool = candidates(starts, common = true).filter { followUpCount(it, 4) >= 2 }
+        if (commonPool.isNotEmpty()) return commonPool[rng.nextInt(commonPool.size)]
+        val pool = candidates(starts, common = false)
+        return if (pool.isEmpty()) null else pool[rng.nextInt(pool.size)]
+    }
+
+    /** 아이템: AI가 방금 낸 단어를 다른 단어로 교체. null=교체 불가 */
+    fun rerollAiWord(): String? {
+        val base = prevWord
+        val starts = if (base == null) null else Dueum.variants(base.last())
+        val newWord = if (starts == null) {
+            openingWord().takeIf { it != lastWord }
+        } else {
+            pickAiWord(starts)
+        } ?: return null
+        // 기존 단어는 used 에 남겨두고(재사용 금지) lastWord 만 교체
+        used.add(newWord)
+        lastWord = newWord
+        return newWord
+    }
+
+    /** AI 응수. null = 항복 */
+    fun aiMove(): String? {
+        val starts = allowedStarts() ?: return null
+        // 항복 판정(난이도별 성향)
+        when (level) {
+            AiLevel.VERY_EASY -> if (round >= 5 && rng.nextInt(100) < 15) return null
+            AiLevel.EASY -> if (round >= 8 && rng.nextInt(100) < 12) return null
+            else -> {}
+        }
+        return pickAiWord(starts)
+    }
+
+    private fun pickAiWord(starts: Set<Char>): String? {
+        return when (level) {
+            AiLevel.VERY_EASY -> {
+                // 한방단어(이을 단어 0개) 절대 금지 + 플레이어가 잇기 아주 좋은 단어만
+                var pool = candidates(starts, common = true).filter { followUpCount(it, 12) >= 8 }
+                if (pool.isEmpty()) pool = candidates(starts, common = true).filter { followUpCount(it, 2) >= 1 }
+                if (pool.isEmpty()) null
+                else sample(pool, 10).maxByOrNull { followUpCount(it, 60) }
+            }
+            AiLevel.EASY -> {
+                val pool = candidates(starts, common = true).filter { followUpCount(it, 8) >= 5 }
+                if (pool.isEmpty()) null
+                else sample(pool, 10).maxByOrNull { followUpCount(it, 60) }
+            }
+            AiLevel.NORMAL -> {
+                var pool = candidates(starts, common = true).filter { followUpCount(it, 4) >= 3 }
+                if (pool.isEmpty()) {
+                    pool = candidates(starts, common = false).filter { it.length <= 4 && followUpCount(it, 4) >= 3 }
+                }
+                if (pool.isEmpty()) null else pool[rng.nextInt(pool.size)]
+            }
+            AiLevel.HARD -> {
+                val pool = candidates(starts, common = false)
+                if (pool.isEmpty()) return null
+                val sampled = sample(pool, 40)
+                val canKill = round >= 6
+                val scored = sampled.map { it to followUpCount(it, 30) }
+                val safe = scored.filter { it.second > 0 }
+                val killers = scored.filter { it.second == 0 }
+                when {
+                    canKill && killers.isNotEmpty() -> killers[rng.nextInt(killers.size)].first
+                    safe.isNotEmpty() -> safe.minByOrNull { it.second }!!.first
+                    else -> killers[rng.nextInt(killers.size)].first
+                }
+            }
+        }
+    }
+
+    private fun sample(pool: List<String>, n: Int): List<String> {
+        if (pool.size <= n) return pool
+        val picked = HashSet<Int>()
+        val out = ArrayList<String>(n)
+        while (out.size < n) {
+            val i = rng.nextInt(pool.size)
+            if (picked.add(i)) out.add(pool[i])
+        }
+        return out
+    }
+}

@@ -106,14 +106,19 @@ class MainActivity : AppCompatActivity() {
         binding.tvCoins.text = "🪙 ${Wallet.coins(this)} 코인"
 
         // 프로필
-        val level = Wallet.level(this)
-        val rank = Progress.rankOf(level)
+        val playerLevel = Wallet.level(this)
+        val rank = Progress.rankOf(playerLevel)
         binding.avatarMe.bind(AvatarCatalog.byId(Wallet.selectedAvatarId(this)))
-        binding.tvLevelRank.text = "Lv.$level · ${rank.label}"
-        val into = Progress.xpIntoLevel(Wallet.xp(this))
-        val need = Progress.xpForNextLevel(level)
-        binding.xpBar.progress = if (need > 0) (into * 1000 / need) else 1000
-        binding.tvXp.text = "$into / $need XP"
+        binding.tvLevelRank.text = "Lv.$playerLevel · ${rank.label}"
+        if (playerLevel >= Progress.MAX_LEVEL) {
+            binding.xpBar.progress = 1000
+            binding.tvXp.text = "MAX"
+        } else {
+            val into = Progress.xpIntoLevel(Wallet.xp(this))
+            val need = Progress.xpForNextLevel(playerLevel)
+            binding.xpBar.progress = if (need > 0) (into * 1000 / need).coerceIn(0, 1000) else 1000
+            binding.tvXp.text = "$into / $need XP"
+        }
 
         renderMissions()
     }

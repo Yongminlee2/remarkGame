@@ -1,121 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp">
+    android:fillViewport="true"
+    android:overScrollMode="never">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBack"
-            style="?attr/borderlessButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="0dp"
-            android:text="←"
-            android:textColor="@color/text_primary"
-            android:textSize="22sp" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:text="모험"
-            android:textColor="@color/text_primary"
-            android:textSize="22sp"
-            android:fontFamily="sans-serif-black" />
-
-        <TextView
-            android:id="@+id/tvBestStage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bubble_sys"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="8dp"
-            android:textColor="@color/warn"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        app:cardBackgroundColor="@color/surface"
-        app:cardCornerRadius="24dp"
-        app:strokeColor="@color/surface_stroke"
-        app:strokeWidth="1dp"
-        app:cardElevation="0dp">
+        android:orientation="vertical"
+        android:padding="20dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:padding="24dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-            <com.kkeutmal.game.AvatarView
-                android:id="@+id/avatarBoss"
-                android:layout_width="88dp"
-                android:layout_height="88dp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/tvStageNo"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBack"
+                style="?attr/borderlessButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:text="←"
                 android:textColor="@color/text_primary"
-                android:textSize="34sp"
+                android:textSize="22sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="모험"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
                 android:fontFamily="sans-serif-black" />
 
             <TextView
-                android:id="@+id/tvStageInfo"
+                android:id="@+id/tvBestStage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:lineSpacingExtra="4dp"
-                android:textColor="@color/text_dim"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tvBossInfo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center"
-                android:textColor="@color/error"
+                android:background="@drawable/bubble_sys"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:textColor="@color/warn"
                 android:textSize="14sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
+                android:textStyle="bold" />
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
 
-    <TextView
-        android:id="@+id/tvNextBoss"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:textColor="@color/text_dim"
-        android:textSize="13sp" />
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="24dp"
+            app:strokeColor="@color/surface_stroke"
+            app:strokeWidth="1dp"
+            app:cardElevation="0dp">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnChallenge"
-        android:layout_width="match_parent"
-        android:layout_height="62dp"
-        android:layout_marginTop="24dp"
-        android:text="도전하기"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/cta_text"
-        app:backgroundTint="@color/cta_bg"
-        app:cornerRadius="31dp" />
-</LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:padding="24dp">
+
+                <com.kkeutmal.game.AvatarView
+                    android:id="@+id/avatarBoss"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvStageNo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="34sp"
+                    android:fontFamily="sans-serif-black" />
+
+                <TextView
+                    android:id="@+id/tvStageInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="@color/text_dim"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvBossInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:textColor="@color/error"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvNextBoss"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="62dp"
+            android:layout_marginTop="24dp"
+            android:text="도전하기"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/cta_text"
+            app:backgroundTint="@color/cta_bg"
+            app:cornerRadius="31dp" />
+    </LinearLayout>
+</ScrollView>

@@ -45,6 +45,7 @@ class GameActivity : AppCompatActivity() {
     private var stageConfig: StageConfig? = null
     private var voiceWordCount = 0
     private var longWordCount = 0
+    private var doubleRewardActive = false
 
     private var timer: CountDownTimer? = null
     private var remainingMs = 0L
@@ -130,6 +131,7 @@ class GameActivity : AppCompatActivity() {
         binding.btnItemTime.setOnClickListener { useTimeItem() }
         binding.btnItemHint.setOnClickListener { useHintItem() }
         binding.btnItemPass.setOnClickListener { usePassItem() }
+        binding.btnItemDouble.setOnClickListener { useDoubleItem() }
         if (engine.noTimer) binding.btnItemTime.visibility = View.GONE
         refreshItemBar()
 
@@ -242,6 +244,7 @@ class GameActivity : AppCompatActivity() {
         binding.btnItemTime.text = label("item_time", "⏰")
         binding.btnItemHint.text = label("item_hint", "💡")
         binding.btnItemPass.text = label("item_pass", "🔄")
+        binding.btnItemDouble.text = label("item_double", "🎯")
     }
 
     private fun playerTurnActive() = !gameOver && binding.etWord.isEnabled
@@ -286,6 +289,19 @@ class GameActivity : AppCompatActivity() {
             scrollToEnd()
             endGame(win = false, reason = "한방단어에 당했어요")
         }
+    }
+
+    private fun useDoubleItem() {
+        if (!playerTurnActive()) return
+        if (doubleRewardActive) { showInfo("🎯 이미 적용 중이에요"); return }
+        if (Wallet.itemCount(this, "item_double") <= 0) {
+            showError("🎯 아이템이 없어요. 상점에서 구매하세요"); return
+        }
+        Wallet.useItem(this, "item_double")
+        doubleRewardActive = true
+        audio.play("sfx_ok")
+        showInfo("🎯 이번 판 보상 2배!")
+        refreshItemBar()
     }
 
     // ---------- 타이머 ----------
@@ -356,6 +372,8 @@ class GameActivity : AppCompatActivity() {
         binding.btnItemHint.alpha = itemAlpha
         binding.btnItemPass.isEnabled = enabled
         binding.btnItemPass.alpha = itemAlpha
+        binding.btnItemDouble.isEnabled = enabled
+        binding.btnItemDouble.alpha = itemAlpha
         binding.tvRequired.alpha = if (enabled) 1f else 0.45f
         if (!enabled && voice.listening) voice.cancel()
     }
@@ -399,6 +417,27 @@ class GameActivity : AppCompatActivity() {
 
     private fun endGame(win: Boolean, reason: String) {
         if (gameOver) return
+        if (!win && !reason.contains("한방단어") && Wallet.itemCount(this, "item_revive") > 0) {
+            stopTimer()
+            MaterialAlertDialogBuilder(this)
+                .setTitle("🛡 부활할까요?")
+                .setMessage("부활 아이템을 써서 이어서 할 수 있어요 (보유 ${Wallet.itemCount(this, "item_revive")}개)")
+                .setPositiveButton("부활") { _, _ ->
+                    Wallet.useItem(this, "item_revive")
+                    refreshItemBar()
+                    adapter.add(ChatItem.Sys("🛡 부활했어요!"))
+                    scrollToEnd()
+                    beginPlayerTurn()
+                }
+                .setNegativeButton("포기") { _, _ -> finishGame(win, reason) }
+                .setCancelable(false)
+                .show()
+            return
+        }
+        finishGame(win, reason)
+    }
+
+    private fun finishGame(win: Boolean, reason: String) {
         gameOver = true
         stopTimer()
         setInputEnabled(false)
@@ -425,7 +464,7 @@ class GameActivity : AppCompatActivity() {
             rounds = engine.round,
             stage = stageNumber,
             isBoss = stageConfig?.boss != null,
-            doubleReward = false
+            doubleReward = doubleRewardActive
         )
         val reward = GameResult.rewardFor(outcome)
         if (reward.coins > 0) Wallet.addCoins(this, reward.coins)
@@ -433,6 +472,36 @@ class GameActivity : AppCompatActivity() {
         Wallet.recordRounds(this, engine.round)
         if (mode == GameMode.ADVENTURE && win) {
             Wallet.setStage(this, stageNumber + 1)
+        }
+
+        fun bump(m: Mission, amount: Int) {
+            if (amount <= 0) return
+            val key = "mission_progress_${m.id}"
+            prefs.edit().putInt(key, Missions.applyProgress(m, prefs.getInt(key, 0), amount)).apply()
+        }
+        bump(Mission.PLAY_3, 1)
+        bump(Mission.ROUNDS_5, engine.round)
+        bump(Mission.LONG_WORD_3, longWordCount)
+        bump(Mission.VOICE_5, voiceWordCount)
+        bump(Mission.SCORE_300, engine.score)
+        if (win && mode == GameMode.ADVENTURE) bump(Mission.STAGE_2, 1)
+        if (win && reason.contains("항복")) bump(Mission.SURRENDER_1, 1)
+
+        val newLevel = Wallet.level(this)
+        AvatarCatalog.ALL.forEach { def ->
+            val u = def.unlock
+            val unlocked = when (u) {
+                is Unlock.Level -> u.level <= newLevel
+                is Unlock.BossClear -> win && stageConfig?.boss != null && u.stage == stageNumber
+                else -> false
+            }
+            if (unlocked) Wallet.ownAvatarId(this, def.id)
+        }
+        // 도전과제는 이번 판 기록이 반영된 뒤에 판정한다
+        Achievements.metBy(Wallet.playerStats(this)).forEach { ach ->
+            AvatarCatalog.ALL
+                .filter { it.unlock is Unlock.Achieve && (it.unlock as Unlock.Achieve).achievementId == ach.id }
+                .forEach { Wallet.ownAvatarId(this, it.id) }
         }
 
         handler.postDelayed({ showResultDialog(win, reason, newBest, reward, levelsGained) }, 700L)

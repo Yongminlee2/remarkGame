@@ -1,6 +1,5 @@
 # 끝말잇기 확장 구현 계획
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 기존 끝말잇기 앱에 성장(레벨·랭크)·수집(아바타 48종 도감)·도전(모험 모드와 보스)·습관(일일 미션·연속 출석·도전과제) 네 시스템을 추가해 반복 플레이 동기를 만든다.
 
@@ -26,8 +25,7 @@
 - `app/src/main/assets/dict_all.txt`는 **LC_ALL=C 정렬**을 전제로 한다(`WordDict`가 이진 탐색). 사전 파일을 재생성할 일이 있으면 정렬 순서를 반드시 유지한다.
 - 색상은 새로 만들지 말고 `app/src/main/res/values/colors.xml`의 기존 토큰을 쓴다: `surface`, `surface_stroke`, `input_bg`, `chip_bg`, `accent`(#7C6CFF), `accent2`(#59D499), `warn`(#FFC533), `error`(#FF6161), `text_primary`, `text_dim`, `cta_bg`, `cta_text`. 랭크·등급 색만 새로 추가한다.
 - 패키지는 전부 `com.kkeutmal.game`.
-- 커밋은 작업 단위로 한다. 커밋 메시지에 AI 관련 표기(`Co-Authored-By` 등)를 **넣지 않는다**.
-- 스펙 원본: `docs/superpowers/specs/2026-07-26-game-expansion-design.md`
+- 스펙 원본: `docs/specs/2026-07-26-game-expansion-design.md`
 
 ---
 
@@ -2880,7 +2878,7 @@ git commit -m "홈 화면 재구성 — 프로필·XP·일일 미션·출석 보
 
 **Files:**
 - Create: `tools/BalanceSim.java`
-- Modify: `docs/superpowers/specs/2026-07-26-game-expansion-design.md` (검증 결과 기록)
+- Modify: `docs/specs/2026-07-26-game-expansion-design.md` (검증 결과 기록)
 
 **Interfaces:**
 - Consumes: 없음 (Kotlin 로직을 Java로 옮겨 심은 독립 하네스)
@@ -3014,7 +3012,7 @@ cd /c/workAndroid/WordChain
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add tools/ docs/superpowers/specs/2026-07-26-game-expansion-design.md
+git add tools/ docs/specs/2026-07-26-game-expansion-design.md
 git commit -m "밸런스 시뮬레이션 하네스 추가와 측정 결과 기록"
 ```
 

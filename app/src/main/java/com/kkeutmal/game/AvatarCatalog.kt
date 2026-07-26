@@ -81,8 +81,7 @@ object AvatarCatalog {
         is Unlock.Coin -> "${u.price}코인"
         is Unlock.Level -> "레벨 ${u.level} 달성"
         is Unlock.BossClear -> "${u.stage}스테이지 보스 클리어"
-        // TODO(Task 5): Achievements.labelOf(u.achievementId) 로 교체
-        is Unlock.Achieve -> u.achievementId
+        is Unlock.Achieve -> Achievements.labelOf(u.achievementId)
     }
 
     private fun make(

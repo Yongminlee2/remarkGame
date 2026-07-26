@@ -1,15 +1,15 @@
 package com.kkeutmal.game
 
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.ImageView
+import androidx.core.content.ContextCompat
 
 /**
  * 몸통 · 눈(좌우 2개) · 입 PNG 를 겹쳐 아바타 하나를 그린다.
- * 잠긴 아바타는 검은 실루엣으로 표시한다.
+ * 잠긴 아바타는 진회청색(#40465F) 실루엣으로 표시한다.
  *
  * 몸통 PNG는 80x80(뷰 비율과 동일)이라 MATCH_PARENT/FIT_CENTER로 충분하지만,
  * 눈·입 PNG는 꽉 채운 바운딩박스(예: 눈 20x20, 화난 입 40x10)라서 MATCH_PARENT로
@@ -62,8 +62,9 @@ class AvatarView @JvmOverloads constructor(
         mouth.setImageResource(drawableId(def.face.mouthAsset))
 
         if (locked) {
-            allLayers.forEach { it.setColorFilter(Color.BLACK) }
-            alpha = 0.45f
+            val silhouette = ContextCompat.getColor(context, R.color.locked_silhouette)
+            allLayers.forEach { it.setColorFilter(silhouette) }
+            alpha = 1f
         } else {
             allLayers.forEach { it.clearColorFilter() }
             alpha = 1f

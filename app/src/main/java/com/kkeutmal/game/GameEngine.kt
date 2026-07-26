@@ -134,12 +134,30 @@ class GameEngine(val level: AiLevel, val noTimer: Boolean, val bossRules: List<B
     }
 
     /** 아이템: 낼 수 있는 단어 힌트 */
-    fun hintWord(): String? {
-        val starts = allowedStarts() ?: return null
-        val commonPool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 4) >= 2 }
-        if (commonPool.isNotEmpty()) return commonPool[rng.nextInt(commonPool.size)]
-        val pool = candidatesUnderRules(starts, common = false)
-        return if (pool.isEmpty()) null else pool[rng.nextInt(pool.size)]
+    fun hintWord(): String? = hintWords(1).firstOrNull()
+
+    /**
+     * 아이템: 이어서 낼 수 있는 단어를 최대 n개 추천한다.
+     * 뒤가 막히지 않는 상용 단어를 먼저 채우고, 모자라면 사전 전체에서 보충한다.
+     * 중복 없이 돌려주고, 후보가 없으면 빈 목록을 준다.
+     */
+    fun hintWords(n: Int = 3): List<String> {
+        if (n <= 0) return emptyList()
+        val starts = allowedStarts() ?: return emptyList()
+        val picked = LinkedHashSet<String>()
+
+        val good = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 4) >= 2 }
+        for (w in sample(good, n * 3)) {
+            if (picked.size >= n) break
+            picked.add(w)
+        }
+        if (picked.size < n) {
+            for (w in sample(candidatesUnderRules(starts, common = false), n * 3)) {
+                if (picked.size >= n) break
+                picked.add(w)
+            }
+        }
+        return picked.toList()
     }
 
     /** 아이템: AI가 방금 낸 단어를 다른 단어로 교체. null=교체 불가 */

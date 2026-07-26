@@ -263,11 +263,11 @@ class GameActivity : AppCompatActivity() {
     private fun useHintItem() {
         if (!playerTurnActive()) return
         if (Wallet.itemCount(this, "item_hint") <= 0) { showError("💡 아이템이 없어요. 상점에서 구매하세요"); return }
-        val hint = engine.hintWord()
-        if (hint == null) { showError("힌트로 알려줄 단어가 없어요"); return }
+        val hints = engine.hintWords(3)
+        if (hints.isEmpty()) { showError("힌트로 알려줄 단어가 없어요"); return }
         Wallet.useItem(this, "item_hint")
         audio.play("sfx_ok")
-        showInfo("💡 힌트: $hint")
+        showInfo("💡 ${hints.joinToString("  ·  ")}")
         refreshItemBar()
     }
 

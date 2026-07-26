@@ -19,7 +19,7 @@ object Wallet {
 
     val ITEMS = listOf(
         Item("item_time", "⏰", "시간 +15초", "타이머에 15초를 더해요 (제한시간 모드 전용)", 60),
-        Item("item_hint", "💡", "힌트", "낼 수 있는 단어를 하나 알려줘요", 80),
+        Item("item_hint", "💡", "힌트", "이어서 낼 수 있는 단어를 3개 알려줘요", 80),
         Item("item_pass", "🔄", "단어 바꾸기", "AI가 낸 단어를 다른 단어로 바꿔요", 120),
         Item("item_double", "🎯", "2배 획득", "그 판의 코인과 경험치를 2배로 받아요", 120),
         Item("item_revive", "🛡", "부활", "게임 오버를 1회 무효로 만들고 이어서 해요", 200)
@@ -82,6 +82,22 @@ object Wallet {
         val commons = AvatarCatalog.ALL.filter { it.grade == AvatarGrade.COMMON }.map { it.id }
         val count = oldEmojis.size.coerceIn(0, commons.size)
         return (commons.take(count) + AvatarCatalog.DEFAULT_ID).toSet()
+    }
+
+    /** 첫 실행 때 지급하는 힌트 아이템 수 */
+    const val STARTER_HINTS = 50
+
+    /**
+     * 처음 시작하는 플레이어에게 힌트 아이템을 넉넉히 지급한다.
+     * `starter_granted` 플래그로 한 번만 실행되며, 이미 갖고 있던 개수에 더한다.
+     */
+    fun ensureStarterGrant(ctx: Context) {
+        val prefs = p(ctx)
+        if (prefs.getBoolean("starter_granted", false)) return
+        prefs.edit()
+            .putInt("item_hint", itemCount(ctx, "item_hint") + STARTER_HINTS)
+            .putBoolean("starter_granted", true)
+            .apply()
     }
 
     // ---------- 마이그레이션 ----------

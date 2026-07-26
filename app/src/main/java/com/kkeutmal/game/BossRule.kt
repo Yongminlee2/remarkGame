@@ -11,11 +11,14 @@ enum class BossRule(val label: String, val wordConstraint: Boolean) {
     TIME_8("제한시간 8초", false),
     AI_HANBANG("AI가 한방단어를 노림", false);
 
-    fun accepts(word: String): Boolean = when (this) {
-        MIN_LEN_3 -> word.length >= 3
-        MIN_LEN_4 -> word.length >= 4
-        ENDS_WITH_JONGSEONG -> hasJongseong(word.last())
-        TIME_8, AI_HANBANG -> true
+    fun accepts(word: String): Boolean {
+        if (word.isEmpty()) return false
+        return when (this) {
+            MIN_LEN_3 -> word.length >= 3
+            MIN_LEN_4 -> word.length >= 4
+            ENDS_WITH_JONGSEONG -> hasJongseong(word.last())
+            TIME_8, AI_HANBANG -> true
+        }
     }
 
     private fun hasJongseong(c: Char): Boolean {

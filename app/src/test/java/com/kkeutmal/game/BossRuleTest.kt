@@ -55,4 +55,11 @@ class BossRuleTest {
         )
         assertEquals("", listOf(BossRule.TIME_8).rejectionMessage())
     }
+
+    @Test
+    fun `빈 문자열은 모든 규칙에서 거절된다`() {
+        for (rule in BossRule.entries) {
+            assertFalse(rule.accepts(""))
+        }
+    }
 }

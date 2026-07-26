@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
 
 class MissionsTest {
 
@@ -105,5 +106,30 @@ class MissionsTest {
     fun `월을 넘겨도 연속 판정이 된다`() {
         val r = Missions.advanceStreak("2026-07-31", "2026-08-01", 2)
         assertEquals(3, r.days)
+    }
+
+    @Test
+    fun `연속한 두 날은 절대 같은 미션 조합이 나오지 않는다`() {
+        var currentDate = LocalDate.parse("2026-01-01")
+        for (i in 0 until 400) {
+            val today = currentDate.toString()
+            val tomorrow = currentDate.plusDays(1).toString()
+
+            val todayTrio = Missions.pickDaily(today).toSet()
+            val tomorrowTrio = Missions.pickDaily(tomorrow).toSet()
+
+            assertTrue(
+                "consecutive days must have different mission trios at $today and $tomorrow",
+                todayTrio != tomorrowTrio
+            )
+            currentDate = currentDate.plusDays(1)
+        }
+    }
+
+    @Test
+    fun `안 되는 날짜 문자열도 예외 없이 3개를 준다`() {
+        val picked = Missions.pickDaily("bogus")
+        assertEquals(3, picked.size)
+        assertEquals(3, picked.toSet().size)
     }
 }

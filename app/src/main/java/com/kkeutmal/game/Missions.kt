@@ -29,8 +29,33 @@ object Missions {
 
     private val STREAK_REWARDS = listOf(0, 20, 30, 40, 50, 60, 100) // 1~7일차
 
-    fun pickDaily(dateKey: String): List<Mission> =
-        Mission.entries.shuffled(Random(dateKey.hashCode().toLong())).take(3)
+    fun pickDaily(dateKey: String): List<Mission> {
+        val todayTrio = Mission.entries.shuffled(Random(dateKey.hashCode().toLong())).take(3)
+
+        // Compute yesterday's plain seeded trio for comparison (do NOT apply anti-repeat logic to avoid deep recursion)
+        val yesterdayTrio = try {
+            val yesterday = LocalDate.parse(dateKey).minusDays(1).toString()
+            Mission.entries.shuffled(Random(yesterday.hashCode().toLong())).take(3)
+        } catch (_: Exception) {
+            return todayTrio  // If parsing fails, return today's trio as-is
+        }
+
+        // If today's plain trio matches yesterday's plain trio, find a perturbed seed that differs
+        if (todayTrio.toSet() == yesterdayTrio.toSet()) {
+            // Try increasingly aggressive perturbations to find a different trio
+            for (perturb in 1L..200L) {
+                val perturbedSeed = dateKey.hashCode().toLong() * 31L + perturb
+                val perturbedTrio = Mission.entries.shuffled(Random(perturbedSeed)).take(3)
+                if (perturbedTrio.toSet() != yesterdayTrio.toSet()) {
+                    return perturbedTrio
+                }
+            }
+            // If none of the perturbations work, use the first one anyway
+            return Mission.entries.shuffled(Random(dateKey.hashCode().toLong() * 31L + 1)).take(3)
+        }
+
+        return todayTrio
+    }
 
     fun applyProgress(mission: Mission, current: Int, amount: Int): Int =
         when (mission.aggregate) {

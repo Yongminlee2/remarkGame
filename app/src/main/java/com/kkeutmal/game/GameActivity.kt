@@ -1,6 +1,7 @@
 package com.kkeutmal.game
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -545,13 +546,31 @@ class GameActivity : AppCompatActivity() {
             .setView(b.root)
             .setCancelable(false)
             .create()
-        b.btnRetry.setOnClickListener {
-            dialog.dismiss()
-            recreate()
-        }
-        b.btnHome.setOnClickListener {
-            dialog.dismiss()
-            finish()
+
+        if (mode == GameMode.ADVENTURE && win) {
+            // 스테이지를 깼으면 다음 스테이지로 바로 이어가는 버튼 하나만 둔다.
+            // 홈으로 가려면 뒤로가기를 쓰면 된다(게임이 끝난 상태라 바로 나간다).
+            val nextStage = Wallet.stage(this)
+            b.btnRetry.text = "${nextStage}스테이지로 ▶"
+            b.btnHome.visibility = View.GONE
+            b.btnRetry.setOnClickListener {
+                dialog.dismiss()
+                startActivity(
+                    Intent(this, GameActivity::class.java)
+                        .putExtra(EXTRA_MODE, GameMode.ADVENTURE.name)
+                        .putExtra(EXTRA_STAGE, nextStage)
+                )
+                finish()
+            }
+        } else {
+            b.btnRetry.setOnClickListener {
+                dialog.dismiss()
+                recreate()
+            }
+            b.btnHome.setOnClickListener {
+                dialog.dismiss()
+                finish()
+            }
         }
         dialog.show()
     }

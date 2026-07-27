@@ -344,7 +344,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:layout_marginBottom="8dp"
-            android:text="ⓘ 정보 · 자료 출처"
+            android:text="ⓘ 만든이 · 버전 · 자료 출처"
             android:textColor="@color/text_dim"
             android:textSize="13sp" />
     </LinearLayout>

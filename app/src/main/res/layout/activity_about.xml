@@ -39,13 +39,62 @@
                 android:fontFamily="sans-serif-black" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvVersion"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:textColor="@color/text_dim"
-            android:textSize="13sp" />
+            android:orientation="vertical"
+            android:padding="14dp"
+            android:background="@drawable/bg_input">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Made by LYM"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-black" />
+
+            <TextView
+                android:id="@+id/tvVersion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/text_dim"
+                android:textSize="13sp"
+                android:textIsSelectable="true" />
+
+            <TextView
+                android:id="@+id/tvMail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:text="📧  dydals5678@gmail.com"
+                android:textColor="@color/accent2"
+                android:textSize="14sp"
+                android:textIsSelectable="true" />
+
+            <TextView
+                android:id="@+id/tvGithub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:text="🔗  github.com/Yongminlee2/remarkGame"
+                android:textColor="@color/accent2"
+                android:textSize="14sp"
+                android:textIsSelectable="true" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="문의하실 때 위 버전 정보를 함께 알려 주시면 빠르게 확인할 수 있습니다."
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
@@ -82,9 +131,18 @@
             android:orientation="vertical" />
 
         <TextView
+            android:id="@+id/tvMeaningNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="12dp"
+            android:lineSpacingExtra="4dp"
+            android:textColor="@color/text_dim"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:layout_marginBottom="24dp"
             android:lineSpacingExtra="4dp"
             android:text="효과음과 배경음악은 전부 직접 합성해 만들었습니다."

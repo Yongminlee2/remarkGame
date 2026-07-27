@@ -1,5 +1,8 @@
 # 끝말잇기 (WordChain)
 
+> **Made by LYM** · 문의 dydals5678@gmail.com
+> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.3.1 (빌드 2)**
+
 AI와 1:1로 대결하는 한국어 끝말잇기 안드로이드 게임. 채팅하듯 말풍선으로 주고받는 UI에,
 표준국어대사전+끄투 DB 기반 **43만 단어 사전**과 **뜻풀이 35만 건**을 완전 오프라인으로 내장했다.
 
@@ -19,7 +22,7 @@ AI와 1:1로 대결하는 한국어 끝말잇기 안드로이드 게임. 채팅�
 | 제한시간 분리 | 난이도와 별개로 "제한시간 없이 느긋하게" 스위치 (무제한 × 어려움 조합 가능) |
 | 두음법칙 | 력→역, 라→나, 뉴→유 등 자동 인정 (초성 ㄹ/ㄴ 완화 규칙을 유니코드 분해로 계산) |
 | 한방단어 | 어려움만 6라운드 이후 사용, 매우쉬움~보통은 **절대 금지** (시뮬레이션으로 검증) |
-| 단어 뜻풀이 | AI든 나든 단어를 내면 말풍선 안에 사전 뜻이 작게 표시 (82% 커버) |
+| 단어 뜻풀이 | AI든 나든 단어를 내면 말풍선 안에 사전 뜻이 작게 표시. **43만 단어 전부 뜻이 뜬다** |
 | 음성 입력 | 마이크 버튼 → 한국어 STT → 자동 입력·전송 (SpeechRecognizer ko-KR) |
 | 효과음·진동 | 정답/오답/승리/패배/카운트다운 효과음 6종 + 상황별 진동 패턴 |
 | BGM 20곡 | 곡마다 조성·템포·코드진행·악기가 다른 신스 루프, 랜덤 연속 재생 |
@@ -88,6 +91,7 @@ java -Dstdout.encoding=UTF-8 tools/BalanceSim.java
 | 명사 목록(기초) | [han-dle/pd-korean-noun-list-for-wordles](https://github.com/han-dle/pd-korean-noun-list-for-wordles) — 표준국어대사전 추출 | CC0 |
 | 단어 DB(확장) | [JJoriping/KKuTu](https://github.com/JJoriping/KKuTu) db.sql 의 kkutu_ko 테이블 (끄투 계열 게임 사전) | 단어 목록은 저작권 비보호 |
 | 뜻풀이 | [acidsound/korean_wordlist](https://github.com/acidsound/korean_wordlist) korean_dictionary1/2.json | 표준국어대사전 기반 |
+| 품사·분야 꼬리표 | [JJoriping/KKuTu](https://github.com/JJoriping/KKuTu) db.sql 의 type/theme 칸 | 분류 코드 |
 | 효과음·BGM | 전부 자체 신스 합성 (`AudioGen.java`/`BgmGen.java` → ffmpeg ogg 인코딩) | 자작 |
 | 아바타 그래픽 | [Kenney — Shape Characters](https://kenney.nl/assets/shape-characters) | CC0 1.0 |
 | UI 아이콘 | [Kenney — Game Icons](https://kenney.nl/assets/game-icons) | CC0 1.0 |
@@ -130,7 +134,9 @@ tools/                                 # 데스크톱 검증 하네스 (앱에 �
 ├── BalanceSim.java     # 레벨·스테이지·경제 곡선 측정
 ├── BossSafetySim.java  # 보스 규칙별 "후보 0인 시작 글자" 집계
 ├── RuleSafetySim.java  # 규칙 8종 전수 안전성 측정 (막히는 글자·단어량 비율)
-└── ChainSafetySim.java # 이어가기 3방식별 "다음 차례가 막히는" 단어 비율 측정
+├── ChainSafetySim.java # 이어가기 3방식별 "다음 차례가 막히는" 단어 비율 측정
+├── gen_means.py        # 빈 뜻풀이를 어근에서 규칙으로 생성 (--write 로 means.bin 갱신)
+└── extract_kkutu_meta.py # 끄투 낱말표에서 품사·분야 꼬리표 추출
 
 app/src/main/assets/
 ├── dict_all.txt       # 429,961 단어, LC_ALL=C 정렬 (이진탐색 전제!)
@@ -141,6 +147,13 @@ app/src/main/assets/
 
 ### 설계 포인트
 
+- **뜻풀이 빈칸 메우기**: 원본 사전은 파생어·합성어의 뜻이 자주 비어 있다.
+  '가가대소'는 실려 있는데 '가가대소하다'는 없는 식으로 **43만 중 7.7만(18%)이 빈칸**이었다.
+  단어를 낼 때마다 뜻이 뜨는 게 재미의 일부라 규칙으로 채웠다 —
+  접미사를 떼어 어근 뜻을 살리고(-하다/-되다/-거리다/-히 …), 합성어는 양쪽으로 갈라 잇고,
+  어근을 못 찾으면 끄투 낱말표의 품사·분야 꼬리표로 "부사." "《화학》 분야의 명사."까지 후퇴한다.
+  **없는 뜻을 지어내지 않는 것이 원칙**이라, 끝까지 모르는 56개는 모른다고 밝힌다.
+  자동 생성분은 정보 화면에 그렇게 만들었다고 표시한다.
 - **사전 자료구조**: 43만 단어를 HashSet 대신 **정렬 String 배열 + 이진탐색**으로 보관.
   단어 검증 O(log n), 첫 글자 범위 조회(lower bound)로 AI 후보 탐색. 뜻풀이는 메모리에 올리지 않고
   `means.idx` 오프셋으로 필요할 때만 파일에서 읽는다(첫 실행 시 filesDir로 복사 후 RandomAccessFile).
@@ -219,6 +232,14 @@ app/src/main/assets/
    - 앞말잇기를 위해 사전에 끝 글자 역색인을 추가하고, 검증·AI 후보 탐색·한방단어 판정
      세 곳을 전부 방식별로 갈아끼움 — 한 곳만 놓치면 플레이어가 이유 없이 지는 버그가 난다
    - 조건이 눈에 안 띈다는 피드백을 반영해 규칙 배너에 테두리·색상 강조 추가
+7. **v1.3.1 — 뜻풀이 전면 보강 · 개발자 정보**
+   - "표준국어대사전에 없는 단어는 뜻이 안 뜬다"는 지적에서 출발.
+     빈칸 7.7만 개를 8단 규칙 사다리로 채워 **뜻 없는 단어 0개**로 만듦
+   - 원본을 다시 받아 확인한 결과 데이터셋이 표제어당 뜻 하나만 담고 있고,
+     하필 희귀 동음이의어를 골라 둔 항목이 있었다(사과=赦過, 관리=菅履).
+     끄투 공개 덤프의 뜻풀이 칸도 비어 있어, 결국 가진 자료로 규칙 생성하는 쪽을 택함
+   - 정보 화면에 만든이·연락처·저장소 주소·버전(빌드 번호 포함) 표시.
+     문의가 오면 어느 빌드인지 바로 알 수 있게 함
 
 ### v1.3에서 실제로 잡은 버그
 

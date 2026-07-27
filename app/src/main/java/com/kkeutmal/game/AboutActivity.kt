@@ -1,9 +1,13 @@
 package com.kkeutmal.game
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.kkeutmal.game.databinding.ActivityAboutBinding
@@ -15,6 +19,11 @@ import com.kkeutmal.game.databinding.ActivityAboutBinding
  * 이 화면을 지우거나 항목을 빼면 라이선스 위반이 된다.
  */
 class AboutActivity : AppCompatActivity() {
+
+    companion object {
+        const val MAIL = "dydals5678@gmail.com"
+        const val GITHUB = "https://github.com/Yongminlee2/remarkGame"
+    }
 
     private lateinit var binding: ActivityAboutBinding
 
@@ -42,6 +51,14 @@ class AboutActivity : AppCompatActivity() {
         )
     )
 
+    /**
+     * 원본에 뜻풀이가 없는 낱말은 어근에서 규칙으로 만들어 채웠다.
+     * 사전이 실제로 그렇게 적었다고 오해하지 않도록 이 사실을 밝혀 둔다.
+     */
+    private val meaningNote =
+        "원본 사전에 뜻풀이가 없는 파생어·합성어는 어근의 뜻에서 규칙으로 만들어 채웠습니다. " +
+            "\"'가가대소'를 하다\"처럼 어근을 가리키는 문장이 그렇게 만들어진 것입니다."
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAboutBinding.inflate(layoutInflater)
@@ -49,8 +66,34 @@ class AboutActivity : AppCompatActivity() {
         binding.root.applySystemBarInsets()
         binding.btnBack.setOnClickListener { finish() }
 
-        binding.tvVersion.text = "버전 ${BuildConfig.VERSION_NAME}"
+        // 문의가 들어왔을 때 어느 빌드인지 바로 알 수 있게 버전 이름과 번호를 함께 적는다
+        binding.tvVersion.text =
+            "버전 ${BuildConfig.VERSION_NAME} (빌드 ${BuildConfig.VERSION_CODE})"
+
+        binding.tvMail.setOnClickListener {
+            open(
+                Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$MAIL")).putExtra(
+                    Intent.EXTRA_SUBJECT,
+                    "끝말잇기 문의 (v${BuildConfig.VERSION_NAME}/${BuildConfig.VERSION_CODE})"
+                ),
+                "메일 앱을 찾을 수 없어요"
+            )
+        }
+        binding.tvGithub.setOnClickListener {
+            open(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB)), "브라우저를 찾을 수 없어요")
+        }
+
+        binding.tvMeaningNote.text = meaningNote
         buildCredits()
+    }
+
+    /** 상대 앱이 없을 수도 있으니 실패해도 앱이 죽지 않게 감싼다 */
+    private fun open(intent: Intent, failMessage: String) {
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, failMessage, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()

@@ -8,3 +8,7 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+
+# 뜻풀이 생성기의 중간 파일(10MB). db.sql 에서 언제든 다시 만든다 —
+# tools/extract_kkutu_meta.py 주석 참고
+tools/kkutu_meta.tsv

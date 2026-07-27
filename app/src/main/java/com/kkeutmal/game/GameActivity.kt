@@ -3,6 +3,7 @@ package com.kkeutmal.game
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
@@ -82,11 +83,16 @@ class GameActivity : AppCompatActivity() {
                 else -> ""
             }
             if (banner.isNotEmpty()) {
+                val accent = ContextCompat.getColor(this, if (boss != null) R.color.error else R.color.warn)
                 binding.bossBanner.visibility = View.VISIBLE
                 binding.bossBanner.text = banner
-                binding.bossBanner.setTextColor(
-                    ContextCompat.getColor(this, if (boss != null) R.color.error else R.color.warn)
-                )
+                binding.bossBanner.setTextColor(accent)
+                // 규칙이 눈에 확 띄도록 배너 테두리도 같은 색으로 맞춘다
+                (ContextCompat.getDrawable(this, R.drawable.bg_rule_banner) as? GradientDrawable)?.let { bg ->
+                    bg.mutate()
+                    bg.setStroke((2 * resources.displayMetrics.density).toInt(), accent)
+                    binding.bossBanner.background = bg
+                }
             }
         } else {
             val level = runCatching {
@@ -186,7 +192,7 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun beginPlayerTurn() {
-        binding.tvRequired.text = "${engine.allowedStartsLabel()} (으)로 시작하는 단어!"
+        updateRequiredChip()
         val starts = engine.allowedStarts()
         if (starts != null && !engine.hasAnyCandidate(starts)) {
             adapter.add(ChatItem.Sys("${engine.allowedStartsLabel()}(으)로 시작하는 단어가 사전에 없어요… 한방단어! 💥"))
@@ -293,7 +299,7 @@ class GameActivity : AppCompatActivity() {
         adapter.add(ChatItem.Sys("🔄 AI의 단어를 바꿨어요"))
         adapter.add(ChatItem.Ai(newWord, WordDict.meaning(newWord)))
         scrollToEnd()
-        binding.tvRequired.text = "${engine.allowedStartsLabel()} (으)로 시작하는 단어!"
+        updateRequiredChip()
         refreshItemBar()
         // 새 단어가 한방단어인지 재확인
         val starts = engine.allowedStarts()
@@ -365,6 +371,25 @@ class GameActivity : AppCompatActivity() {
     }
 
     // ---------- 상태/UI ----------
+
+    /**
+     * 입력창 바로 위 칩. 이어야 할 첫 글자와 **이 스테이지의 규칙**을 함께 보여준다.
+     * 규칙을 화면 맨 위 배너에만 두면 단어를 칠 때 시선이 닿지 않아 놓치기 쉽다.
+     */
+    private fun updateRequiredChip() {
+        val head = "${engine.allowedStartsLabel()} (으)로 시작"
+        val rule = stageConfig?.ruleLabel.orEmpty()
+        binding.tvRequired.text = if (rule.isEmpty()) "$head 하는 단어!" else "$head\n📜 $rule"
+    }
+
+    /** 게임을 끝내고 홈 화면으로 돌아간다. 중간에 쌓인 모험 화면도 함께 정리한다. */
+    private fun goHome() {
+        startActivity(
+            Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        )
+        finish()
+    }
 
     @SuppressLint("SetTextI18n")
     private fun updateHeader() {
@@ -559,11 +584,10 @@ class GameActivity : AppCompatActivity() {
             .create()
 
         if (mode == GameMode.ADVENTURE && win) {
-            // 스테이지를 깼으면 다음 스테이지로 바로 이어가는 버튼 하나만 둔다.
-            // 홈으로 가려면 뒤로가기를 쓰면 된다(게임이 끝난 상태라 바로 나간다).
+            // 스테이지를 깼으면 바로 다음 스테이지로 이어갈 수 있게 하되,
+            // 그만두고 나갈 길도 함께 남겨둔다.
             val nextStage = Wallet.stage(this)
             b.btnRetry.text = "${nextStage}스테이지로 ▶"
-            b.btnHome.visibility = View.GONE
             b.btnRetry.setOnClickListener {
                 dialog.dismiss()
                 startActivity(
@@ -578,10 +602,14 @@ class GameActivity : AppCompatActivity() {
                 dialog.dismiss()
                 recreate()
             }
-            b.btnHome.setOnClickListener {
-                dialog.dismiss()
-                finish()
-            }
+        }
+
+        // 어느 경우든 홈으로 나갈 수 있어야 한다.
+        // finish() 만 하면 모험 화면으로 되돌아가므로 홈까지 확실히 보낸다.
+        b.btnHome.visibility = View.VISIBLE
+        b.btnHome.setOnClickListener {
+            dialog.dismiss()
+            goHome()
         }
         dialog.show()
     }

@@ -53,6 +53,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnCollection.setOnClickListener {
             startActivity(Intent(this, CollectionActivity::class.java))
         }
+        binding.btnAbout.setOnClickListener {
+            startActivity(Intent(this, AboutActivity::class.java))
+        }
 
         binding.btnStart.setOnClickListener {
             startActivity(

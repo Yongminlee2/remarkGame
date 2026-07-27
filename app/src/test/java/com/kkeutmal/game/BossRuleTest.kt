@@ -62,4 +62,38 @@ class BossRuleTest {
             assertFalse(rule.accepts(""))
         }
     }
+
+    @Test
+    fun `정확한 글자수 규칙`() {
+        assertTrue(BossRule.EXACT_LEN_2.accepts("사과"))
+        assertFalse(BossRule.EXACT_LEN_2.accepts("자동차"))
+        assertTrue(BossRule.EXACT_LEN_3.accepts("자동차"))
+        assertFalse(BossRule.EXACT_LEN_3.accepts("사과"))
+        assertFalse(BossRule.EXACT_LEN_3.accepts("고등학교"))
+        assertTrue(BossRule.EXACT_LEN_4.accepts("고등학교"))
+        assertFalse(BossRule.EXACT_LEN_4.accepts("자동차"))
+    }
+
+    @Test
+    fun `다섯 글자 이상 규칙`() {
+        assertFalse(BossRule.MIN_LEN_5.accepts("고등학교"))
+        assertTrue(BossRule.MIN_LEN_5.accepts("고등학생회"))
+    }
+
+    @Test
+    fun `받침 없이 끝나는 단어 규칙`() {
+        assertTrue(BossRule.NO_JONGSEONG.accepts("사과"))   // 과: 받침 없음
+        assertFalse(BossRule.NO_JONGSEONG.accepts("사람"))  // 람: 받침 ㅁ
+        assertFalse(BossRule.NO_JONGSEONG.accepts("책상"))  // 상: 받침 ㅇ
+    }
+
+    @Test
+    fun `받침 있음과 없음은 서로 배타적이다`() {
+        for (w in listOf("사과", "사람", "책상", "바다", "가방")) {
+            assertTrue(
+                "$w 는 둘 중 정확히 하나만 통과해야 함",
+                BossRule.ENDS_WITH_JONGSEONG.accepts(w) != BossRule.NO_JONGSEONG.accepts(w)
+            )
+        }
+    }
 }

@@ -11,11 +11,83 @@ class StageTest {
 
     @Test
     fun `제한시간은 30초에서 시작해 8초까지 줄어든다`() {
+        // 보스 스테이지는 TIME_8 규칙이 기본 곡선을 덮어쓰므로
+        // 순수한 곡선은 보스가 아닌 스테이지에서 확인한다
         assertEquals(30, Stage.configFor(1).timerSec)
-        assertEquals(20, Stage.configFor(30).timerSec)
-        assertEquals(10, Stage.configFor(60).timerSec)
-        assertEquals(8, Stage.configFor(66).timerSec)
-        assertEquals(8, Stage.configFor(200).timerSec)
+        assertEquals(20, Stage.configFor(31).timerSec)
+        assertEquals(10, Stage.configFor(61).timerSec)
+        assertEquals(8, Stage.configFor(67).timerSec)
+        assertEquals(8, Stage.configFor(199).timerSec)
+    }
+
+    @Test
+    fun `1스테이지는 규칙 없이 시작한다`() {
+        assertTrue(Stage.configFor(1).rules.isEmpty())
+        assertEquals("", Stage.configFor(1).ruleLabel)
+    }
+
+    @Test
+    fun `2스테이지부터는 모든 스테이지에 규칙이 걸린다`() {
+        for (n in 2..200) {
+            assertTrue("스테이지 $n 에 규칙이 없음", Stage.configFor(n).rules.isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `일반 스테이지는 단어 제약을 정확히 하나 갖는다`() {
+        for (n in 2..200) {
+            if (Stage.isBossStage(n)) continue
+            val rules = Stage.configFor(n).rules
+            assertEquals("스테이지 $n", 1, rules.size)
+            assertTrue("스테이지 $n 은 단어 제약이어야 함", rules[0].wordConstraint)
+        }
+    }
+
+    @Test
+    fun `같은 스테이지는 항상 같은 규칙이 나온다`() {
+        for (n in listOf(2, 7, 13, 28, 44, 91)) {
+            assertEquals(Stage.configFor(n).rules, Stage.configFor(n).rules)
+        }
+    }
+
+    @Test
+    fun `보스 규칙에 서로 모순되는 조합이 없다`() {
+        // "두 글자만" + "3글자 이상" 처럼 같이 걸리면 통과할 단어가 하나도 없는 조합을 막는다.
+        // 30 이상 보스는 단어 제약 1개 + 압박 규칙 1개로만 구성한다.
+        for (n in 30..300 step 5) {
+            val rules = Stage.configFor(n).rules
+            assertEquals("스테이지 $n", 2, rules.size)
+            assertEquals("스테이지 $n 단어제약", 1, rules.count { it.wordConstraint })
+            assertEquals("스테이지 $n 압박규칙", 1, rules.count { !it.wordConstraint })
+        }
+    }
+
+    @Test
+    fun `연달아 붙은 일반 스테이지는 같은 규칙이 나오지 않는다`() {
+        // 규칙 종류가 적어서 무작위로 뽑으면 세 판 연속 같은 규칙이 흔하다.
+        // 같은 티어 안에서는 반드시 달라야 한다.
+        for (n in 2 until 300) {
+            if (Stage.isBossStage(n) || Stage.isBossStage(n + 1)) continue
+            val a = Stage.configFor(n).rules
+            val b = Stage.configFor(n + 1).rules
+            // 티어가 바뀌는 경계(9→10, 19→20 등)는 풀 자체가 달라지므로 제외
+            if (tierOf(n) != tierOf(n + 1)) continue
+            assertTrue("스테이지 $n 과 ${n + 1} 규칙이 같음: $a", a != b)
+        }
+    }
+
+    private fun tierOf(n: Int) = when {
+        n <= 9 -> 0
+        n <= 19 -> 1
+        else -> 2
+    }
+
+    @Test
+    fun `초반에는 빡센 제약이 나오지 않는다`() {
+        for (n in 2..9) {
+            val r = Stage.configFor(n).rules
+            assertTrue("스테이지 $n 에 어려운 규칙", BossRule.MIN_LEN_5 !in r && BossRule.EXACT_LEN_4 !in r)
+        }
     }
 
     @Test

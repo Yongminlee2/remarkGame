@@ -67,15 +67,26 @@ class GameActivity : AppCompatActivity() {
             stageNumber = intent.getIntExtra(EXTRA_STAGE, 1)
             val cfg = Stage.configFor(stageNumber)
             stageConfig = cfg
-            engine = GameEngine(cfg.aiLevel, noTimer = false, bossRules = cfg.boss?.rules ?: emptyList())
+            engine = GameEngine(cfg.aiLevel, noTimer = false, bossRules = cfg.rules)
             binding.tvDifficulty.text = "${stageNumber}스테이지"
             binding.tvGoal.visibility = View.VISIBLE
             binding.tvGoal.text = "목표 ${cfg.targetRounds}라운드"
-            cfg.boss?.let { boss ->
+
+            // 보스는 이름과 함께, 일반 스테이지는 규칙만 배너에 띄운다
+            val boss = cfg.boss
+            val ruleText = cfg.ruleLabel
+            val banner = when {
+                boss != null && ruleText.isNotEmpty() -> "👹 ${boss.name} — $ruleText"
+                boss != null -> "👹 ${boss.name}"
+                ruleText.isNotEmpty() -> "📜 $ruleText"
+                else -> ""
+            }
+            if (banner.isNotEmpty()) {
                 binding.bossBanner.visibility = View.VISIBLE
-                val ruleText = boss.rules.rejectionMessage()
-                binding.bossBanner.text =
-                    if (ruleText.isEmpty()) "👹 ${boss.name}" else "👹 ${boss.name} — $ruleText"
+                binding.bossBanner.text = banner
+                binding.bossBanner.setTextColor(
+                    ContextCompat.getColor(this, if (boss != null) R.color.error else R.color.warn)
+                )
             }
         } else {
             val level = runCatching {

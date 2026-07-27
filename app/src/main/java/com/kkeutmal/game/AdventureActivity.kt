@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.kkeutmal.game.databinding.ActivityAdventureBinding
 
 class AdventureActivity : AppCompatActivity() {
@@ -44,17 +45,26 @@ class AdventureActivity : AppCompatActivity() {
         }
 
         val boss = cfg.boss
+        val ruleText = cfg.ruleLabel
+
         if (boss != null) {
             binding.tvBossInfo.visibility = View.VISIBLE
-            val ruleText = boss.rules.rejectionMessage()
+            binding.tvBossInfo.setTextColor(ContextCompat.getColor(this, R.color.error))
             binding.tvBossInfo.text =
                 if (ruleText.isEmpty()) "👹 보스 ${boss.name}" else "👹 보스 ${boss.name}\n$ruleText"
             binding.avatarBoss.visibility = View.VISIBLE
             AvatarCatalog.byId("rhombus_red_special")?.let { binding.avatarBoss.bindBoss(it) }
             binding.tvNextBoss.text = "지금이 보스 스테이지입니다"
         } else {
-            binding.tvBossInfo.visibility = View.GONE
+            // 일반 스테이지도 규칙이 하나씩 걸리므로 도전 전에 미리 보여준다
             binding.avatarBoss.visibility = View.GONE
+            if (ruleText.isEmpty()) {
+                binding.tvBossInfo.visibility = View.GONE
+            } else {
+                binding.tvBossInfo.visibility = View.VISIBLE
+                binding.tvBossInfo.setTextColor(ContextCompat.getColor(this, R.color.warn))
+                binding.tvBossInfo.text = "📜 $ruleText"
+            }
             binding.tvNextBoss.text = "다음 보스까지 ${Stage.stagesToNextBoss(n)}스테이지"
         }
     }

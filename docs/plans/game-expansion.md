@@ -25,7 +25,7 @@
 - `app/src/main/assets/dict_all.txt`는 **LC_ALL=C 정렬**을 전제로 한다(`WordDict`가 이진 탐색). 사전 파일을 재생성할 일이 있으면 정렬 순서를 반드시 유지한다.
 - 색상은 새로 만들지 말고 `app/src/main/res/values/colors.xml`의 기존 토큰을 쓴다: `surface`, `surface_stroke`, `input_bg`, `chip_bg`, `accent`(#7C6CFF), `accent2`(#59D499), `warn`(#FFC533), `error`(#FF6161), `text_primary`, `text_dim`, `cta_bg`, `cta_text`. 랭크·등급 색만 새로 추가한다.
 - 패키지는 전부 `com.kkeutmal.game`.
-- 스펙 원본: `docs/specs/2026-07-26-game-expansion-design.md`
+- 스펙 원본: `docs/specs/game-expansion-design.md`
 
 ---
 
@@ -2878,7 +2878,7 @@ git commit -m "홈 화면 재구성 — 프로필·XP·일일 미션·출석 보
 
 **Files:**
 - Create: `tools/BalanceSim.java`
-- Modify: `docs/specs/2026-07-26-game-expansion-design.md` (검증 결과 기록)
+- Modify: `docs/specs/game-expansion-design.md` (검증 결과 기록)
 
 **Interfaces:**
 - Consumes: 없음 (Kotlin 로직을 Java로 옮겨 심은 독립 하네스)
@@ -3012,7 +3012,7 @@ cd /c/workAndroid/WordChain
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add tools/ docs/specs/2026-07-26-game-expansion-design.md
+git add tools/ docs/specs/game-expansion-design.md
 git commit -m "밸런스 시뮬레이션 하네스 추가와 측정 결과 기록"
 ```
 

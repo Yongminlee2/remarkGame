@@ -53,7 +53,12 @@ class AdventureActivity : AppCompatActivity() {
             binding.tvBossInfo.text =
                 if (ruleText.isEmpty()) "👹 보스 ${boss.name}" else "👹 보스 ${boss.name}\n$ruleText"
             binding.avatarBoss.visibility = View.VISIBLE
-            AvatarCatalog.byId("rhombus_red_special")?.let { binding.avatarBoss.bindBoss(it) }
+            // 보스 초상: 붉은 계열의 개성 있는 아바타를 쓰고 bindBoss 가 화난 입으로 바꾼다.
+            // 아이디를 박아두면 카탈로그가 바뀔 때 조용히 사라지므로 조건으로 찾는다.
+            val bossFace = AvatarCatalog.ALL.firstOrNull {
+                it.color == AvatarColor.RED && it.grade != AvatarGrade.COMMON
+            } ?: AvatarCatalog.byIdOrDefault(AvatarCatalog.DEFAULT_ID)
+            binding.avatarBoss.bindBoss(bossFace)
             binding.tvNextBoss.text = "지금이 보스 스테이지입니다"
         } else {
             // 일반 스테이지도 규칙이 하나씩 걸리므로 도전 전에 미리 보여준다

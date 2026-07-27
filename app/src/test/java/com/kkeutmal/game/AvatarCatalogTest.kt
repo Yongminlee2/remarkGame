@@ -23,19 +23,41 @@ class AvatarCatalogTest {
     }
 
     @Test
-    fun `기본 표정은 전부 일반 등급이고 코인으로 산다`() {
-        val basics = AvatarCatalog.ALL.filter { it.face == AvatarFace.BASIC }
-        assertEquals(24, basics.size)
-        assertTrue(basics.all { it.grade == AvatarGrade.COMMON })
-        assertTrue(basics.all { it.unlock is Unlock.Coin })
+    fun `일반 등급은 24종이고 전부 코인으로 산다`() {
+        val commons = AvatarCatalog.ALL.filter { it.grade == AvatarGrade.COMMON }
+        assertEquals(24, commons.size)
+        assertTrue(commons.all { it.unlock is Unlock.Coin })
+        // 일반 등급에는 순한 표정만 쓴다
+        assertTrue(commons.all { it.face in AvatarFace.FRIENDLY })
+    }
+
+    @Test
+    fun `표정 8종이 골고루 쓰인다`() {
+        val used = AvatarCatalog.ALL.groupingBy { it.face }.eachCount()
+        assertEquals("표정 8종이 모두 등장해야 함", 8, used.size)
+        // 48종을 8표정으로 나누므로 표정마다 6개씩
+        assertTrue("표정별 편중: $used", used.values.all { it == 6 })
+    }
+
+    @Test
+    fun `희귀 이상은 개성 있는 표정을 쓴다`() {
+        val rare = AvatarCatalog.ALL.filter { it.grade != AvatarGrade.COMMON }
+        assertTrue(rare.all { it.face in AvatarFace.CHARACTERFUL })
     }
 
     @Test
     fun `일반 등급 가격은 몸 형태로 정해진다`() {
-        val square = AvatarCatalog.ALL.first { it.shape == AvatarShape.SQUARE && it.face == AvatarFace.BASIC }
-        val rhombus = AvatarCatalog.ALL.first { it.shape == AvatarShape.RHOMBUS && it.face == AvatarFace.BASIC }
+        val square = AvatarCatalog.ALL.first { it.shape == AvatarShape.SQUARE && it.grade == AvatarGrade.COMMON }
+        val rhombus = AvatarCatalog.ALL.first { it.shape == AvatarShape.RHOMBUS && it.grade == AvatarGrade.COMMON }
         assertEquals(150, (square.unlock as Unlock.Coin).price)
         assertEquals(300, (rhombus.unlock as Unlock.Coin).price)
+    }
+
+    @Test
+    fun `기본 아바타 아이디는 카탈로그에 실재한다`() {
+        // 표정 배정 규칙을 바꾸면 이 아이디가 조용히 사라질 수 있다
+        assertNotNull(AvatarCatalog.byId(AvatarCatalog.DEFAULT_ID))
+        assertEquals(AvatarCatalog.DEFAULT_ID, AvatarCatalog.byIdOrDefault("없는아이디").id)
     }
 
     @Test

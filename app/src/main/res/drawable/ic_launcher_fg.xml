@@ -1,17 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  앱 아이콘 전경: 게임 속 아바타와 같은 결의 캐릭터 얼굴.
+  적응형 아이콘 규격상 안전 영역은 108dp 중 가운데 72dp(약 66%)라
+  캐릭터를 그 안에 넣고, 말풍선 꼬리만 살짝 벗어나게 뒀다.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- 말풍선 -->
+
+    <!-- 그림자 -->
+    <path
+        android:fillColor="#20000000"
+        android:pathData="M28,32 h52 a12,12 0 0 1 12,12 v30 a12,12 0 0 1 -12,12 h-52 a12,12 0 0 1 -12,-12 v-30 a12,12 0 0 1 12,-12 z" />
+
+    <!-- 몸통: 둥근 네모 (아바타의 squircle 과 같은 인상) -->
+    <path
+        android:fillColor="#FFC533"
+        android:pathData="M28,30 h52 a12,12 0 0 1 12,12 v30 a12,12 0 0 1 -12,12 h-52 a12,12 0 0 1 -12,-12 v-30 a12,12 0 0 1 12,-12 z" />
+
+    <!-- 말풍선 꼬리: 끝말잇기(말) 게임임을 알리는 단서 -->
+    <path
+        android:fillColor="#FFC533"
+        android:pathData="M38,82 l-4,14 16,-14 z" />
+
+    <!-- 왼쪽 눈 -->
+    <path
+        android:fillColor="#2B2F45"
+        android:pathData="M44,52 m-6,0 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0" />
+    <!-- 오른쪽 눈 -->
+    <path
+        android:fillColor="#2B2F45"
+        android:pathData="M70,52 m-6,0 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0" />
+
+    <!-- 눈 하이라이트 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,34 H66 A10,10 0 0 1 76,44 V54 A10,10 0 0 1 66,64 H48 L38,72 V64 A10,10 0 0 1 28,54 V44 A10,10 0 0 1 38,34 Z" />
-    <!-- 점 3개 -->
+        android:pathData="M46,50 m-2,0 a2,2 0 1 0 4,0 a2,2 0 1 0 -4,0" />
     <path
-        android:fillColor="#7C6CFF"
-        android:pathData="M42,49 m-3.6,0 a3.6,3.6 0 1 0 7.2,0 a3.6,3.6 0 1 0 -7.2,0 M52,49 m-3.6,0 a3.6,3.6 0 1 0 7.2,0 a3.6,3.6 0 1 0 -7.2,0 M62,49 m-3.6,0 a3.6,3.6 0 1 0 7.2,0 a3.6,3.6 0 1 0 -7.2,0" />
-    <!-- 작은 답장 말풍선 -->
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,50 m-2,0 a2,2 0 1 0 4,0 a2,2 0 1 0 -4,0" />
+
+    <!-- 웃는 입 -->
     <path
-        android:fillColor="#4ADEBB"
-        android:pathData="M62,66 H74 A6,6 0 0 1 80,72 V76 A6,6 0 0 1 74,82 H70 L76,88 66,82 H62 A6,6 0 0 1 56,76 V72 A6,6 0 0 1 62,66 Z" />
+        android:strokeColor="#2B2F45"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M46,68 q11,9 22,0" />
+
+    <!-- 볼터치 -->
+    <path
+        android:fillColor="#33FF6161"
+        android:pathData="M36,62 m-4,0 a4,3 0 1 0 8,0 a4,3 0 1 0 -8,0" />
+    <path
+        android:fillColor="#33FF6161"
+        android:pathData="M78,62 m-4,0 a4,3 0 1 0 8,0 a4,3 0 1 0 -8,0" />
 </vector>

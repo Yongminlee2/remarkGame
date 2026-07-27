@@ -16,9 +16,32 @@ enum class AvatarColor(val id: String, val label: String) {
     YELLOW("yellow", "노랑")
 }
 
-enum class AvatarFace(val id: String, val label: String, val eyeAsset: String, val mouthAsset: String) {
+/**
+ * 표정. 눈·입은 필수, 눈썹은 있는 것도 있고 없는 것도 있다(null).
+ * 눈과 눈썹 이미지는 "한 짝"짜리라 좌우로 두 번 그린다.
+ */
+enum class AvatarFace(
+    val id: String,
+    val label: String,
+    val eyeAsset: String,
+    val mouthAsset: String,
+    val browAsset: String? = null
+) {
     BASIC("basic", "방긋", "facial_part_eye_open", "facial_part_mouth_happy"),
-    SPECIAL("special", "새침", "facial_part_eye_half_top", "facial_part_mouth_smirk")
+    SMIRK("smirk", "새침", "facial_part_eye_half_top", "facial_part_mouth_smirk"),
+    SLEEPY("sleepy", "졸린", "facial_part_eye_closed_down", "facial_part_mouth_smirk"),
+    GRIN("grin", "헤벌쭉", "facial_part_eye_closed_up", "facial_part_mouth_happy"),
+    SULKY("sulky", "뿌루퉁", "facial_part_eye_half_bottom", "facial_part_mouth_sad", "facial_part_eyebrow_a"),
+    FIERCE("fierce", "씩씩", "facial_part_eye_open", "facial_part_mouth_angry", "facial_part_eyebrow_c"),
+    WINK("wink", "윙크", "facial_part_eye_half_top_wing", "facial_part_mouth_smirk"),
+    PROUD("proud", "으쓱", "facial_part_eye_half_top", "facial_part_mouth_smirk", "facial_part_eyebrow_d");
+
+    companion object {
+        /** 일반 등급에 쓰는 순한 표정들 */
+        val FRIENDLY = listOf(BASIC, SMIRK, SLEEPY, GRIN)
+        /** 희귀 이상에 쓰는 개성 있는 표정들 */
+        val CHARACTERFUL = listOf(SULKY, FIERCE, WINK, PROUD)
+    }
 }
 
 enum class AvatarGrade(val label: String) {
@@ -52,13 +75,18 @@ object AvatarCatalog {
     private val LEGENDARY_ACHIEVEMENTS = listOf("ach_rounds_20", "ach_stage_50", "ach_collect_30", "ach_streak_7")
 
     val ALL: List<AvatarDef> = buildList {
-        // 기본 표정 24종 = 일반 등급
+        // 일반 등급 24종 — 순한 표정 4종을 돌려가며 배정해 같은 얼굴이 몰리지 않게 한다
+        var i = 0
         for (shape in AvatarShape.entries) {
             for (color in AvatarColor.entries) {
-                add(make(shape, color, AvatarFace.BASIC, AvatarGrade.COMMON, Unlock.Coin(shape.price)))
+                // +1 오프셋: 기본 아바타(square_blue)가 BASIC 표정을 유지하도록 맞춘 값.
+                // 이걸 바꾸면 DEFAULT_ID 가 가리키는 아이디가 사라진다.
+                val face = AvatarFace.FRIENDLY[(i + 1) % AvatarFace.FRIENDLY.size]
+                add(make(shape, color, face, AvatarGrade.COMMON, Unlock.Coin(shape.price)))
+                i++
             }
         }
-        // 특수 표정 24종 = 희귀 12 + 영웅 8 + 전설 4
+        // 희귀 12 + 영웅 8 + 전설 4 — 개성 있는 표정 4종을 돌려가며 배정
         var index = 0
         for (shape in AvatarShape.entries) {
             for (color in AvatarColor.entries) {
@@ -67,7 +95,8 @@ object AvatarCatalog {
                     index < 20 -> AvatarGrade.EPIC to Unlock.BossClear(EPIC_BOSS_STAGES[index - 12])
                     else -> AvatarGrade.LEGENDARY to Unlock.Achieve(LEGENDARY_ACHIEVEMENTS[index - 20])
                 }
-                add(make(shape, color, AvatarFace.SPECIAL, grade, unlock))
+                val face = AvatarFace.CHARACTERFUL[index % AvatarFace.CHARACTERFUL.size]
+                add(make(shape, color, face, grade, unlock))
                 index++
             }
         }
@@ -76,6 +105,10 @@ object AvatarCatalog {
     private val byId: Map<String, AvatarDef> = ALL.associateBy { it.id }
 
     fun byId(id: String): AvatarDef? = byId[id]
+
+    /** 저장된 아이디가 낡아서 사라졌을 때도 빈 아바타가 뜨지 않게 한다 */
+    fun byIdOrDefault(id: String): AvatarDef =
+        byId[id] ?: byId[DEFAULT_ID] ?: ALL.first()
 
     fun unlockDescription(def: AvatarDef): String = when (val u = def.unlock) {
         is Unlock.Coin -> "${u.price}코인"

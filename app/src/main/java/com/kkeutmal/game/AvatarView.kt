@@ -25,12 +25,14 @@ class AvatarView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyle) {
 
     private val body = ImageView(context)
+    private val browLeft = ImageView(context)
+    private val browRight = ImageView(context)
     private val eyeLeft = ImageView(context)
     private val eyeRight = ImageView(context)
     private val mouth = ImageView(context)
 
-    private val faceParts = listOf(eyeLeft, eyeRight, mouth)
-    private val allLayers = listOf(body, eyeLeft, eyeRight, mouth)
+    private val faceParts = listOf(browLeft, browRight, eyeLeft, eyeRight, mouth)
+    private val allLayers = listOf(body, browLeft, browRight, eyeLeft, eyeRight, mouth)
 
     init {
         body.scaleType = ImageView.ScaleType.FIT_CENTER
@@ -40,6 +42,9 @@ class AvatarView @JvmOverloads constructor(
             it.scaleType = ImageView.ScaleType.FIT_CENTER
             addView(it, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
         }
+        // 눈·눈썹 에셋은 한 짝짜리라 오른쪽은 좌우 반전해서 대칭으로 보이게 한다
+        eyeRight.scaleX = -1f
+        browRight.scaleX = -1f
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -60,6 +65,16 @@ class AvatarView @JvmOverloads constructor(
         eyeLeft.setImageResource(drawableId(def.face.eyeAsset))
         eyeRight.setImageResource(drawableId(def.face.eyeAsset))
         mouth.setImageResource(drawableId(def.face.mouthAsset))
+
+        // 눈썹은 표정에 따라 있을 수도 없을 수도 있다
+        val brow = def.face.browAsset
+        if (brow == null) {
+            browLeft.setImageDrawable(null)
+            browRight.setImageDrawable(null)
+        } else {
+            browLeft.setImageResource(drawableId(brow))
+            browRight.setImageResource(drawableId(brow))
+        }
 
         if (locked) {
             val silhouette = ContextCompat.getColor(context, R.color.locked_silhouette)
@@ -88,6 +103,11 @@ class AvatarView @JvmOverloads constructor(
         val eyeTopMargin = height * 0.34f
         sizeFacePart(eyeLeft, eyeWidth, eyeTopMargin, leftMargin = width * 0.26f)
         sizeFacePart(eyeRight, eyeWidth, eyeTopMargin, leftMargin = width * 0.58f)
+
+        // 눈썹은 눈 바로 위(0.24~0.30). 눈 상단 0.34 와 겹치지 않는다.
+        val browTopMargin = height * 0.24f
+        sizeFacePart(browLeft, eyeWidth, browTopMargin, leftMargin = width * 0.26f)
+        sizeFacePart(browRight, eyeWidth, browTopMargin, leftMargin = width * 0.58f)
 
         sizeFacePart(mouth, width * 0.24f, height * 0.60f, centerHorizontal = true)
     }

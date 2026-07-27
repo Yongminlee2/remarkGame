@@ -68,7 +68,12 @@ class GameActivity : AppCompatActivity() {
             stageNumber = intent.getIntExtra(EXTRA_STAGE, 1)
             val cfg = Stage.configFor(stageNumber)
             stageConfig = cfg
-            engine = GameEngine(cfg.aiLevel, noTimer = false, bossRules = cfg.rules)
+            engine = GameEngine(
+                cfg.aiLevel,
+                noTimer = false,
+                bossRules = cfg.rules,
+                chainMode = cfg.chainMode
+            )
             binding.tvDifficulty.text = "${stageNumber}스테이지"
             binding.tvGoal.visibility = View.VISIBLE
             binding.tvGoal.text = "목표 ${cfg.targetRounds}라운드"
@@ -170,7 +175,18 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun startGame() {
-        adapter.add(ChatItem.Sys("첫 단어는 AI가 시작해요. 끝 글자를 이어보세요!"))
+        // 앞말잇기는 "○로 끝나는 단어" 역방향 색인이 필요하다. 43만 단어를 한 번 훑어야 해서
+        // 첫 입력 때 만들면 화면이 잠깐 멈춘다. 사전이 준비된 지금 미리 만들어 둔다.
+        if (stageConfig?.chainMode == ChainMode.HEAD) {
+            Thread({ runCatching { WordDict.indicesEndingWith('가') } }, "chain-index-warmup").start()
+        }
+
+        val intro = when (stageConfig?.chainMode) {
+            ChainMode.HEAD -> "거꾸로예요! AI 단어의 첫 글자로 끝나는 단어를 내세요."
+            ChainMode.SAME_HEAD -> "같은 글자로 계속 이어가는 판이에요!"
+            else -> "첫 단어는 AI가 시작해요. 끝 글자를 이어보세요!"
+        }
+        adapter.add(ChatItem.Sys(intro))
         aiThink {
             val word = engine.openingWord()
             engine.applyWord(word)
@@ -377,8 +393,8 @@ class GameActivity : AppCompatActivity() {
      * 규칙을 화면 맨 위 배너에만 두면 단어를 칠 때 시선이 닿지 않아 놓치기 쉽다.
      */
     private fun updateRequiredChip() {
-        val head = "${engine.allowedStartsLabel()} (으)로 시작"
-        val rule = stageConfig?.ruleLabel.orEmpty()
+        val head = engine.linkPrompt()
+        val rule = stageConfig?.rules?.rejectionMessage().orEmpty()
         binding.tvRequired.text = if (rule.isEmpty()) "$head 하는 단어!" else "$head\n📜 $rule"
     }
 

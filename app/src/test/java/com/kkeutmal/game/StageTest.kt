@@ -27,19 +27,28 @@ class StageTest {
     }
 
     @Test
-    fun `2스테이지부터는 모든 스테이지에 규칙이 걸린다`() {
+    fun `2스테이지부터는 모든 스테이지에 특수 조건이 걸린다`() {
+        // 조건은 단어 제약이거나 이어가기 방식 변경이다. 둘 중 하나는 반드시 있어야 한다.
         for (n in 2..200) {
-            assertTrue("스테이지 $n 에 규칙이 없음", Stage.configFor(n).rules.isNotEmpty())
+            val cfg = Stage.configFor(n)
+            val hasSomething = cfg.rules.isNotEmpty() || cfg.chainMode != ChainMode.TAIL
+            assertTrue("스테이지 $n 에 아무 조건도 없음", hasSomething)
+            assertTrue("스테이지 $n 안내 문구가 비어 있음", cfg.ruleLabel.isNotEmpty())
         }
     }
 
     @Test
-    fun `일반 스테이지는 단어 제약을 정확히 하나 갖는다`() {
+    fun `일반 스테이지는 단어 제약 하나 또는 이어가기 변경 하나만 갖는다`() {
+        // 단어 제약과 이어가기 변경을 겹쳐 걸면 손쓸 수 없이 어려워지므로 섞지 않는다.
         for (n in 2..200) {
             if (Stage.isBossStage(n)) continue
-            val rules = Stage.configFor(n).rules
-            assertEquals("스테이지 $n", 1, rules.size)
-            assertTrue("스테이지 $n 은 단어 제약이어야 함", rules[0].wordConstraint)
+            val cfg = Stage.configFor(n)
+            if (cfg.chainMode != ChainMode.TAIL) {
+                assertTrue("스테이지 $n 은 이어가기 변경인데 단어 제약도 걸림", cfg.rules.isEmpty())
+            } else {
+                assertEquals("스테이지 $n", 1, cfg.rules.size)
+                assertTrue("스테이지 $n 은 단어 제약이어야 함", cfg.rules[0].wordConstraint)
+            }
         }
     }
 
@@ -55,7 +64,9 @@ class StageTest {
         // "두 글자만" + "3글자 이상" 처럼 같이 걸리면 통과할 단어가 하나도 없는 조합을 막는다.
         // 30 이상 보스는 단어 제약 1개 + 압박 규칙 1개로만 구성한다.
         for (n in 30..300 step 5) {
-            val rules = Stage.configFor(n).rules
+            val cfg = Stage.configFor(n)
+            if (cfg.chainMode != ChainMode.TAIL) continue // 이어가기 전용 보스는 단어 규칙이 없다
+            val rules = cfg.rules
             assertEquals("스테이지 $n", 2, rules.size)
             assertEquals("스테이지 $n 단어제약", 1, rules.count { it.wordConstraint })
             assertEquals("스테이지 $n 압박규칙", 1, rules.count { !it.wordConstraint })
@@ -68,8 +79,8 @@ class StageTest {
         // 같은 티어 안에서는 반드시 달라야 한다.
         for (n in 2 until 300) {
             if (Stage.isBossStage(n) || Stage.isBossStage(n + 1)) continue
-            val a = Stage.configFor(n).rules
-            val b = Stage.configFor(n + 1).rules
+            val a = Stage.configFor(n).let { it.rules to it.chainMode }
+            val b = Stage.configFor(n + 1).let { it.rules to it.chainMode }
             // 티어가 바뀌는 경계(9→10, 19→20 등)는 풀 자체가 달라지므로 제외
             if (tierOf(n) != tierOf(n + 1)) continue
             assertTrue("스테이지 $n 과 ${n + 1} 규칙이 같음: $a", a != b)
@@ -142,12 +153,36 @@ class StageTest {
     }
 
     @Test
-    fun `30스테이지 이상 보스는 서로 다른 규칙 두 개를 갖는다`() {
-        for (n in listOf(30, 35, 40, 55, 100)) {
+    fun `30스테이지 이상 혼합 보스는 서로 다른 규칙 두 개를 갖는다`() {
+        // 35·40 은 이어가기 방식을 바꾸는 전용 보스라 단어 규칙을 갖지 않는다
+        for (n in listOf(30, 55, 100)) {
             val rules = Stage.configFor(n).boss!!.rules
             assertEquals("스테이지 $n", 2, rules.size)
             assertEquals("스테이지 $n 규칙 중복", 2, rules.toSet().size)
         }
+    }
+
+    @Test
+    fun `이어가기 전용 보스는 단어 제약을 겹쳐 걸지 않는다`() {
+        val reverse = Stage.configFor(35)
+        assertEquals(ChainMode.HEAD, reverse.chainMode)
+        assertTrue(reverse.rules.isEmpty())
+        assertEquals("거꾸로 대왕", reverse.boss!!.name)
+
+        val sameHead = Stage.configFor(40)
+        assertEquals(ChainMode.SAME_HEAD, sameHead.chainMode)
+        assertTrue(sameHead.rules.isEmpty())
+    }
+
+    @Test
+    fun `이어가기 변경은 6스테이지부터 나온다`() {
+        for (n in 2..5) {
+            assertEquals("스테이지 $n", ChainMode.TAIL, Stage.configFor(n).chainMode)
+        }
+        assertTrue(
+            "이어가기 변경이 한 번도 안 나옴",
+            (6..40).any { Stage.configFor(it).chainMode != ChainMode.TAIL }
+        )
     }
 
     @Test

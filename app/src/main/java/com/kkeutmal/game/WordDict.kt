@@ -95,6 +95,50 @@ object WordDict {
         }
     }
 
+    /**
+     * 끝 글자로 단어를 찾기 위한 역방향 색인.
+     *
+     * 사전 배열은 단어 순으로 정렬돼 있어 "○로 시작하는 단어"는 이진 탐색 범위로 바로 구하지만,
+     * 앞말잇기(끝 글자를 맞추는 모드)는 "○로 끝나는 단어"가 필요해서 별도 색인이 있어야 한다.
+     * 기본 끝말잇기만 하는 사람은 쓸 일이 없으므로 **처음 필요할 때 한 번만** 만든다.
+     */
+    @Volatile
+    private var byLast: HashMap<Char, IntArray>? = null
+
+    private val EMPTY_INDICES = IntArray(0)
+
+    @Synchronized
+    private fun buildByLast(): HashMap<Char, IntArray> {
+        byLast?.let { return it }
+
+        // 두 번 훑는다. 먼저 글자별 개수를 세고, 그 크기로 IntArray 를 잡아 채운다.
+        // ArrayList<Int> 로 모으면 43만 개가 박싱돼 순간 메모리가 크게 튄다.
+        val counts = HashMap<Char, Int>(4096)
+        for (w in words) {
+            val c = w[w.length - 1]
+            counts[c] = (counts[c] ?: 0) + 1
+        }
+        val result = HashMap<Char, IntArray>(counts.size * 2)
+        val cursor = HashMap<Char, Int>(counts.size * 2)
+        for ((c, n) in counts) {
+            result[c] = IntArray(n)
+            cursor[c] = 0
+        }
+        for (i in words.indices) {
+            val c = words[i][words[i].length - 1]
+            val arr = result[c]!!
+            val pos = cursor[c]!!
+            arr[pos] = i
+            cursor[c] = pos + 1
+        }
+        byLast = result
+        return result
+    }
+
+    /** c 로 끝나는 단어들의 인덱스. 없으면 빈 배열 */
+    fun indicesEndingWith(c: Char): IntArray =
+        (byLast ?: buildByLast())[c] ?: EMPTY_INDICES
+
     fun indexOf(w: String): Int {
         var lo = 0
         var hi = words.size - 1

@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         // 프로필
         val playerLevel = Wallet.level(this)
         val rank = Progress.rankOf(playerLevel)
-        binding.avatarMe.bind(AvatarCatalog.byId(Wallet.selectedAvatarId(this)))
+        binding.avatarMe.bind(AvatarCatalog.byIdOrDefault(Wallet.selectedAvatarId(this)))
         binding.tvLevelRank.text = "Lv.$playerLevel · ${rank.label}"
         if (playerLevel >= Progress.MAX_LEVEL) {
             binding.xpBar.progress = 1000

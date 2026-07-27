@@ -121,10 +121,51 @@ object Wallet {
             .apply()
     }
 
+    /**
+     * 카탈로그에서 사라진 아바타 아이디를 정리한다.
+     *
+     * 표정 종류를 늘리면서 아이디 체계가 바뀌면(예: `circle_red_special` → `circle_red_wink`)
+     * 저장돼 있던 아이디가 어디에도 없는 유령이 된다. 그대로 두면 프로필 아바타가 빈칸이 되고
+     * 도감 수집 개수도 어긋난다. 보유 목록에서 유령을 걷어내고, 착용 중이던 것이 유령이면
+     * 같은 몸형태·색의 아바타로 옮겨준다(없으면 기본 아바타).
+     */
+    fun pruneStaleAvatars(ctx: Context) {
+        val prefs = p(ctx)
+        val owned = prefs.getStringSet("owned_avatars_v2", emptySet()) ?: emptySet()
+        val valid = owned.filter { AvatarCatalog.byId(it) != null }.toMutableSet()
+
+        // 유령이 있었다면 같은 몸형태·색의 아바타로 최대한 살려준다
+        for (stale in owned - valid) {
+            val parts = stale.split("_")
+            if (parts.size < 2) continue
+            AvatarCatalog.ALL.firstOrNull { it.shape.id == parts[0] && it.color.id == parts[1] }
+                ?.let { valid.add(it.id) }
+        }
+        valid.add(AvatarCatalog.DEFAULT_ID)
+
+        val selected = prefs.getString("sel_avatar_v2", AvatarCatalog.DEFAULT_ID)
+        val selectedOk = selected != null && AvatarCatalog.byId(selected) != null
+
+        if (valid != owned || !selectedOk) {
+            val newSelected = if (selectedOk) selected else {
+                val parts = selected?.split("_").orEmpty()
+                if (parts.size >= 2) {
+                    AvatarCatalog.ALL.firstOrNull { it.shape.id == parts[0] && it.color.id == parts[1] }?.id
+                        ?: AvatarCatalog.DEFAULT_ID
+                } else AvatarCatalog.DEFAULT_ID
+            }
+            prefs.edit()
+                .putStringSet("owned_avatars_v2", valid)
+                .putString("sel_avatar_v2", newSelected)
+                .apply()
+        }
+    }
+
     // ---------- 아바타 ----------
 
     fun ownedAvatarIds(ctx: Context): Set<String> {
         ensureMigrated(ctx)
+        pruneStaleAvatars(ctx)
         return p(ctx).getStringSet("owned_avatars_v2", emptySet()) ?: emptySet()
     }
 
@@ -134,6 +175,7 @@ object Wallet {
 
     fun selectedAvatarId(ctx: Context): String {
         ensureMigrated(ctx)
+        pruneStaleAvatars(ctx)
         return p(ctx).getString("sel_avatar_v2", AvatarCatalog.DEFAULT_ID) ?: AvatarCatalog.DEFAULT_ID
     }
 

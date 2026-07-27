@@ -69,7 +69,7 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val b = (holder as PlayerHolder).b
                 b.tvWord.text = item.word
                 b.tvPoints.text = "+${item.points}점"
-                b.avatarView.bind(AvatarCatalog.byId(playerAvatarId))
+                b.avatarView.bind(AvatarCatalog.byIdOrDefault(playerAvatarId))
                 bindMeaning(b.tvMeaning, item.meaning)
             }
             is ChatItem.Sys -> (holder as SysHolder).b.tvText.text = item.text

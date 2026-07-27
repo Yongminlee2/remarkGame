@@ -1,6 +1,7 @@
 package com.kkeutmal.game
 
 import android.content.Intent
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -48,10 +49,10 @@ class AdventureActivity : AppCompatActivity() {
         val ruleText = cfg.ruleLabel
 
         if (boss != null) {
-            binding.tvBossInfo.visibility = View.VISIBLE
-            binding.tvBossInfo.setTextColor(ContextCompat.getColor(this, R.color.error))
-            binding.tvBossInfo.text =
-                if (ruleText.isEmpty()) "👹 보스 ${boss.name}" else "👹 보스 ${boss.name}\n$ruleText"
+            showRule(
+                if (ruleText.isEmpty()) "👹 보스 ${boss.name}" else "👹 보스 ${boss.name}\n$ruleText",
+                R.color.error
+            )
             binding.avatarBoss.visibility = View.VISIBLE
             // 보스 초상: 붉은 계열의 개성 있는 아바타를 쓰고 bindBoss 가 화난 입으로 바꾼다.
             // 아이디를 박아두면 카탈로그가 바뀔 때 조용히 사라지므로 조건으로 찾는다.
@@ -66,11 +67,22 @@ class AdventureActivity : AppCompatActivity() {
             if (ruleText.isEmpty()) {
                 binding.tvBossInfo.visibility = View.GONE
             } else {
-                binding.tvBossInfo.visibility = View.VISIBLE
-                binding.tvBossInfo.setTextColor(ContextCompat.getColor(this, R.color.warn))
-                binding.tvBossInfo.text = "📜 $ruleText"
+                showRule("📜 $ruleText", R.color.warn)
             }
             binding.tvNextBoss.text = "다음 보스까지 ${Stage.stagesToNextBoss(n)}스테이지"
+        }
+    }
+
+    /** 조건 배너. 글자와 테두리를 같은 색으로 맞춰야 눈에 확 들어온다. */
+    private fun showRule(text: String, colorRes: Int) {
+        val accent = ContextCompat.getColor(this, colorRes)
+        binding.tvBossInfo.visibility = View.VISIBLE
+        binding.tvBossInfo.text = text
+        binding.tvBossInfo.setTextColor(accent)
+        (ContextCompat.getDrawable(this, R.drawable.bg_rule_banner) as? GradientDrawable)?.let { bg ->
+            bg.mutate()
+            bg.setStroke((2 * resources.displayMetrics.density).toInt(), accent)
+            binding.tvBossInfo.background = bg
         }
     }
 }

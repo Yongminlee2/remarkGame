@@ -36,7 +36,7 @@ class AboutActivity : AppCompatActivity() {
     private val credits = listOf(
         Credit(
             "단어 뜻풀이",
-            "국립국어원 표준국어대사전",
+            "국립국어원 표준국어대사전 (stdict.korean.go.kr 공개 배포본)",
             "CC BY-SA 2.0 KR (저작자표시-동일조건변경허락)"
         ),
         Credit(
@@ -56,8 +56,10 @@ class AboutActivity : AppCompatActivity() {
      * 사전이 실제로 그렇게 적었다고 오해하지 않도록 이 사실을 밝혀 둔다.
      */
     private val meaningNote =
-        "원본 사전에 뜻풀이가 없는 파생어·합성어는 어근의 뜻에서 규칙으로 만들어 채웠습니다. " +
-            "\"'가가대소'를 하다\"처럼 어근을 가리키는 문장이 그렇게 만들어진 것입니다."
+        "동음이의어는 사전에 실린 여러 뜻 가운데 가장 널리 쓰이는 것을 골라 보여 줍니다. " +
+            "원본 사전에 뜻풀이가 아예 없는 파생어·합성어(전체의 약 4%)는 어근의 뜻에서 " +
+            "규칙으로 만들어 채웠습니다. \"'가가대소'를 하다\"처럼 어근을 가리키는 문장이 " +
+            "그렇게 만들어진 것입니다."
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

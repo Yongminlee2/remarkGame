@@ -1,10 +1,10 @@
 # 끝말잇기 (WordChain)
 
 > **Made by LYM** · 문의 dydals5678@gmail.com
-> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.3.1 (빌드 2)**
+> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.3.2 (빌드 3)**
 
 AI와 1:1로 대결하는 한국어 끝말잇기 안드로이드 게임. 채팅하듯 말풍선으로 주고받는 UI에,
-표준국어대사전+끄투 DB 기반 **43만 단어 사전**과 **뜻풀이 35만 건**을 완전 오프라인으로 내장했다.
+표준국어대사전+끄투 DB 기반 **43만 단어 사전**과 **뜻풀이 43만 건**을 완전 오프라인으로 내장했다.
 
 한 판 하고 끝나는 게임이 아니라 **다시 켤 이유**를 만드는 데 집중했다.
 무한 스테이지와 보스로 이어지는 모험 모드, 레벨·랭크, 아바타 48종 도감, 일일 미션과 연속 출석이
@@ -61,7 +61,7 @@ gradlew.bat :app:assembleDebug
 # → app/build/outputs/apk/debug/app-debug.apk
 ```
 
-단위 테스트 89개:
+단위 테스트 94개:
 
 ```bash
 gradlew.bat :app:testDebugUnitTest
@@ -90,7 +90,8 @@ java -Dstdout.encoding=UTF-8 tools/BalanceSim.java
 |---|---|---|
 | 명사 목록(기초) | [han-dle/pd-korean-noun-list-for-wordles](https://github.com/han-dle/pd-korean-noun-list-for-wordles) — 표준국어대사전 추출 | CC0 |
 | 단어 DB(확장) | [JJoriping/KKuTu](https://github.com/JJoriping/KKuTu) db.sql 의 kkutu_ko 테이블 (끄투 계열 게임 사전) | 단어 목록은 저작권 비보호 |
-| 뜻풀이 | [acidsound/korean_wordlist](https://github.com/acidsound/korean_wordlist) korean_dictionary1/2.json | 표준국어대사전 기반 |
+| 뜻풀이 (주) | [국립국어원 표준국어대사전 XML](https://github.com/spellcheck-ko/korean-dict-nikl-stdict) (stdict.korean.go.kr 배포본) | CC BY-SA 2.0 KR |
+| 뜻풀이 (보조) | [acidsound/korean_wordlist](https://github.com/acidsound/korean_wordlist) korean_dictionary1/2.json | 표준국어대사전 기반 |
 | 품사·분야 꼬리표 | [JJoriping/KKuTu](https://github.com/JJoriping/KKuTu) db.sql 의 type/theme 칸 | 분류 코드 |
 | 효과음·BGM | 전부 자체 신스 합성 (`AudioGen.java`/`BgmGen.java` → ffmpeg ogg 인코딩) | 자작 |
 | 아바타 그래픽 | [Kenney — Shape Characters](https://kenney.nl/assets/shape-characters) | CC0 1.0 |
@@ -128,32 +129,43 @@ app/src/main/java/com/kkeutmal/game/
 ├── AudioManager.kt    # SFX 6종 + BGM 20곡 랜덤 연속 재생
 └── VoiceInput.kt      # SpeechRecognizer 래퍼 (ko-KR, 한글만 추출)
 
-app/src/test/java/com/kkeutmal/game/   # 단위 테스트 89개
+app/src/test/java/com/kkeutmal/game/   # 단위 테스트 94개
 app/src/main/res/drawable-nodpi/       # Kenney CC0 PNG 42장 (몸통24+얼굴14+아이콘4)
 tools/                                 # 데스크톱 검증 하네스 (앱에 포함되지 않음)
 ├── BalanceSim.java     # 레벨·스테이지·경제 곡선 측정
 ├── BossSafetySim.java  # 보스 규칙별 "후보 0인 시작 글자" 집계
 ├── RuleSafetySim.java  # 규칙 8종 전수 안전성 측정 (막히는 글자·단어량 비율)
 ├── ChainSafetySim.java # 이어가기 3방식별 "다음 차례가 막히는" 단어 비율 측정
-├── gen_means.py        # 빈 뜻풀이를 어근에서 규칙으로 생성 (--write 로 means.bin 갱신)
+├── extract_stdict.py   # 표준국어대사전 XML → 동음이의어 중 흔한 뜻 고르기
+├── build_means.py      # 소스 tsv 들을 우선순위대로 합쳐 means.bin/idx 생성
+├── gen_means.py        # 남은 빈칸을 어근에서 규칙으로 생성 (--write)
 └── extract_kkutu_meta.py # 끄투 낱말표에서 품사·분야 꼬리표 추출
 
 app/src/main/assets/
 ├── dict_all.txt       # 429,961 단어, LC_ALL=C 정렬 (이진탐색 전제!)
 ├── dict_common.txt    # 상용 명사 3,099 (AI가 주로 쓰는 풀)
-├── means.bin          # 뜻풀이 원문 (UTF-8 연결, 구분자 없음, 30MB)
+├── means.bin          # 뜻풀이 원문 (UTF-8 연결, 구분자 없음, 37MB)
 └── means.idx          # 단어 i의 뜻 = means.bin[idx[i]..idx[i+1]] (4B LE × n+1)
 ```
 
 ### 설계 포인트
 
-- **뜻풀이 빈칸 메우기**: 원본 사전은 파생어·합성어의 뜻이 자주 비어 있다.
-  '가가대소'는 실려 있는데 '가가대소하다'는 없는 식으로 **43만 중 7.7만(18%)이 빈칸**이었다.
-  단어를 낼 때마다 뜻이 뜨는 게 재미의 일부라 규칙으로 채웠다 —
+- **동음이의어 고르기**: 처음 쓰던 데이터셋은 표제어당 뜻이 **하나뿐**이었고 하필 희귀한 쪽을
+  골라 뒀다 — '사과'가 沙果도 謝過도 아닌 赦過(잘못을 용서함), '관리'가 管理가 아닌 菅履(엄짚신).
+  국립국어원이 배포하는 표준국어대사전 XML에는 동음이의어가 `<item>`으로 전부 들어 있어
+  **그중 실제로 흔한 뜻을 고를 수 있다.** 빈도 수치는 없으므로 사전이 남긴 흔적으로 가늠했다 —
+  용례가 몇 개 달렸는가, 방언·옛말·북한어는 아닌가, 전문 분야 용어뿐인가, 뜻이 여러 갈래인가.
+  흔히 쓰는 말일수록 용례가 붙고 뜻이 갈라진다는 성질을 점수로 옮겼다.
+  용례 자체는 문학작품·기사 인용이 섞여 저작권이 따로 걸리므로 **개수만 세고 본문에는 싣지 않는다.**
+- **뜻풀이 빈칸 메우기**: 그러고도 파생어·합성어는 뜻이 비는 일이 잦다.
+  '가가대소'는 있는데 '가가대소하다'가 없는 식이다. 소스 두 개를 우선순위로 합쳐
+  **실제 사전 뜻 96.2%**를 확보하고, 남은 3.8%는 규칙으로 채웠다 —
   접미사를 떼어 어근 뜻을 살리고(-하다/-되다/-거리다/-히 …), 합성어는 양쪽으로 갈라 잇고,
   어근을 못 찾으면 끄투 낱말표의 품사·분야 꼬리표로 "부사." "《화학》 분야의 명사."까지 후퇴한다.
-  **없는 뜻을 지어내지 않는 것이 원칙**이라, 끝까지 모르는 56개는 모른다고 밝힌다.
+  **없는 뜻을 지어내지 않는 것이 원칙**이라, 끝까지 모르는 것은 모른다고 밝힌다.
   자동 생성분은 정보 화면에 그렇게 만들었다고 표시한다.
+  뜻풀이 자산 세 파일은 서로를 전제해서 하나만 다시 만들면 모든 단어가 엉뚱한 뜻을 달게 되는데
+  화면에서는 "이상한 뜻"으로만 보여 알아채기 어렵다. 그래서 자산 정합성을 단위 테스트로 묶었다.
 - **사전 자료구조**: 43만 단어를 HashSet 대신 **정렬 String 배열 + 이진탐색**으로 보관.
   단어 검증 O(log n), 첫 글자 범위 조회(lower bound)로 AI 후보 탐색. 뜻풀이는 메모리에 올리지 않고
   `means.idx` 오프셋으로 필요할 때만 파일에서 읽는다(첫 실행 시 filesDir로 복사 후 RandomAccessFile).
@@ -167,7 +179,7 @@ app/src/main/assets/
 - **밸런스 검증**: 데스크톱 시뮬레이션(무작위 유효단어 플레이어 × 난이도별 150판)으로
   "AI 규칙위반 0건 / 매우쉬움~보통 한방단어 0건"을 확인하고 출시.
 - **화면과 로직 분리**: 난이도 곡선·보스 규칙·아바타 카탈로그·미션·보상 계산을 전부 Android 의존 없는
-  순수 Kotlin으로 뺐다. 덕분에 위험한 부분(레벨 곡선, 두음법칙, 마이그레이션)을 JUnit 89개로 잡을 수 있고,
+  순수 Kotlin으로 뺐다. 덕분에 위험한 부분(레벨 곡선, 두음법칙, 마이그레이션)을 단위 테스트 94개로 잡을 수 있고,
   화면은 그 결과를 그리기만 한다.
 - **보스 규칙은 두 곳에 동시 적용**: 플레이어 단어 검증뿐 아니라 **한방단어 판정과 AI 후보 탐색에도**
   같은 규칙을 건다. 한쪽만 걸면 "받침 있는 단어만" 같은 규칙에서 후보가 전멸했을 때
@@ -221,7 +233,7 @@ app/src/main/assets/
      (코인 24 / 레벨 12 / 보스 8 / 도전과제 4) — 그래야 네 시스템이 서로를 필요로 한다
    - 무한 스테이지 + 5스테이지마다 보스로 설계해 수제 콘텐츠 제작을 0으로 만듦
      (30스테이지 이후 규칙 2개 조합, 스테이지 번호를 시드로 써서 재현 가능)
-   - 단위 테스트 도입(JUnit 89개). 순수 로직 파일 8개를 화면과 분리한 덕에
+   - 단위 테스트 도입(JUnit 87개). 순수 로직 파일 8개를 화면과 분리한 덕에
      레벨 곡선·두음법칙·마이그레이션 같은 위험 지점을 전부 테스트로 덮음
    - Kenney CC0 에셋으로 아바타 48종 조합, 데스크톱 하네스 2종으로 밸런스 실측
 6. **v1.3.1 — 모험 모드 조건 확장**
@@ -240,6 +252,12 @@ app/src/main/assets/
      끄투 공개 덤프의 뜻풀이 칸도 비어 있어, 결국 가진 자료로 규칙 생성하는 쪽을 택함
    - 정보 화면에 만든이·연락처·저장소 주소·버전(빌드 번호 포함) 표시.
      문의가 오면 어느 빌드인지 바로 알 수 있게 함
+8. **v1.3.2 — 동음이의어 교정 · 조작 다듬기**
+   - 국립국어원 표준국어대사전 XML(43만 항목)로 갈아타 동음이의어 오선택을 바로잡음.
+     실제 사전 뜻 82% → **96.2%**, 규칙 생성분 18% → 3.8%
+   - 항복은 스스로 그만두는 것이므로 부활 아이템을 권하지 않게 함.
+     부활은 '져서 끝났을 때'만 쓰도록 분리
+   - 모험 스테이지 조건 글씨를 14sp → 19sp 로 키우고 배경 판·테두리 추가
 
 ### v1.3에서 실제로 잡은 버그
 

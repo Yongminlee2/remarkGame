@@ -404,11 +404,11 @@ def build(words, mean_of, meta):
 
 
 def cut(s, limit=MAX_BYTES):
-    """UTF-8 기준으로 자른다. 글자 중간에서 끊기지 않게."""
+    """UTF-8 기준 limit 바이트 안으로 자른다. 글자 중간에서 끊기지 않게, 말줄임표 자리까지 빼고."""
     b = s.encode('utf-8')
     if len(b) <= limit:
         return s
-    b = b[:limit]
+    b = b[:limit - 3]                 # '…' 이 3바이트다
     while b and (b[-1] & 0xC0) == 0x80:
         b = b[:-1]
     if b and b[-1] >= 0x80:

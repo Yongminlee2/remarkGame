@@ -461,7 +461,8 @@ class GameActivity : AppCompatActivity() {
             .setPositiveButton("항복") { _, _ ->
                 adapter.add(ChatItem.Sys("항복했어요 🏳"))
                 scrollToEnd()
-                endGame(win = false, reason = "항복했어요")
+                // 스스로 그만두는 것이므로 부활을 권하지 않는다. 부활은 '져서 끝났을 때'만 쓴다.
+                endGame(win = false, reason = "항복했어요", canRevive = false)
             }
             .setNegativeButton("계속하기", null)
             .show()
@@ -469,9 +470,16 @@ class GameActivity : AppCompatActivity() {
 
     // ---------- 종료 ----------
 
-    private fun endGame(win: Boolean, reason: String) {
+    /**
+     * @param canRevive 부활 아이템을 권할 수 있는 마무리인가.
+     *   진짜로 '져서' 끝났을 때만 true 다. 스스로 항복했거나 이어 갈 단어 자체가
+     *   없는 한방단어 상황에서는 부활해 봐야 같은 자리에서 다시 막힌다.
+     */
+    private fun endGame(win: Boolean, reason: String, canRevive: Boolean = true) {
         if (gameOver) return
-        if (!win && !reason.contains("한방단어") && Wallet.itemCount(this, "item_revive") > 0) {
+        if (!win && canRevive && !reason.contains("한방단어") &&
+            Wallet.itemCount(this, "item_revive") > 0
+        ) {
             stopTimer()
             MaterialAlertDialogBuilder(this)
                 .setTitle("🛡 부활할까요?")

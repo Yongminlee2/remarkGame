@@ -157,7 +157,9 @@ def make_feature(path, w=1024, h=500):
            font=f_sub, fill=(226, 226, 240), anchor='ls')
 
     f_tag = korean_font(int(big_h * 0.066), bold=False)
-    tags = ['43만 단어 · 완전 오프라인', '무한 스테이지와 보스전', '광고 없음 · 인터넷 권한 없음']
+    # 광고 관련 문구는 넣지 않는다 — 나중에 광고를 붙일 계획이라
+    # "광고 없음"은 지키지 못할 약속이 된다.
+    tags = ['43만 단어 사전 내장', '단어마다 사전 뜻풀이', '무한 스테이지와 보스전']
     for i, t in enumerate(tags):
         d.text((x, int(big_h * (0.62 + i * 0.095))), '· ' + t,
                font=f_tag, fill=(190, 231, 216), anchor='ls')

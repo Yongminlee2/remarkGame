@@ -1,58 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  앱 아이콘 전경: 게임 속 아바타와 같은 결의 캐릭터 얼굴.
-  적응형 아이콘 규격상 안전 영역은 108dp 중 가운데 72dp(약 66%)라
-  캐릭터를 그 안에 넣고, 말풍선 꼬리만 살짝 벗어나게 뒀다.
+  앱 아이콘 전경: 맞물린 고리 두 개 = '이어가기'.
+
+  런처 아이콘은 48dp 로도 읽혀야 해서 형태를 하나로 줄였다. 얼굴·표정처럼
+  잔 요소가 많으면 작아질 때 뭉개진다. 고리 두 개가 겹친 모양은 크기와 무관하게
+  '이어져 있다'로 읽히고, 끝말잇기의 핵심이 바로 그것이다.
+
+  적응형 아이콘 안전 영역은 108 중 가운데 72(약 66%)다. 고리 둘을 합친 가로 폭이
+  그 안에 들어오도록 반지름과 간격을 잡았다.
+
+  맞물린 느낌은 그리는 순서로 만든다 — 노랑, 민트 순으로 그린 뒤
+  겹치는 구간의 왼쪽 절반만 노랑을 다시 덮어씌운다.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
 
-    <!-- 그림자 -->
+    <!-- 바닥 그림자: 보라 배경 위에서 고리가 떠 보이게 -->
     <path
-        android:fillColor="#20000000"
-        android:pathData="M28,32 h52 a12,12 0 0 1 12,12 v30 a12,12 0 0 1 -12,12 h-52 a12,12 0 0 1 -12,-12 v-30 a12,12 0 0 1 12,-12 z" />
+        android:fillType="evenOdd"
+        android:fillColor="#33000000"
+        android:pathData="M43,57 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 z
+                          M43,57 m-11,0 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 z" />
+    <path
+        android:fillType="evenOdd"
+        android:fillColor="#33000000"
+        android:pathData="M65,57 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 z
+                          M65,57 m-11,0 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 z" />
 
-    <!-- 몸통: 둥근 네모 (아바타의 squircle 과 같은 인상) -->
+    <!-- 왼쪽 고리 (노랑) -->
     <path
+        android:fillType="evenOdd"
         android:fillColor="#FFC533"
-        android:pathData="M28,30 h52 a12,12 0 0 1 12,12 v30 a12,12 0 0 1 -12,12 h-52 a12,12 0 0 1 -12,-12 v-30 a12,12 0 0 1 12,-12 z" />
+        android:pathData="M43,54 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 z
+                          M43,54 m-11,0 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 z" />
 
-    <!-- 말풍선 꼬리: 끝말잇기(말) 게임임을 알리는 단서 -->
+    <!-- 오른쪽 고리 (민트) — 노랑 위에 얹힌다 -->
     <path
-        android:fillColor="#FFC533"
-        android:pathData="M38,82 l-4,14 16,-14 z" />
+        android:fillType="evenOdd"
+        android:fillColor="#59D499"
+        android:pathData="M65,54 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 z
+                          M65,54 m-11,0 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 z" />
 
-    <!-- 왼쪽 눈 -->
-    <path
-        android:fillColor="#2B2F45"
-        android:pathData="M44,52 m-6,0 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0" />
-    <!-- 오른쪽 눈 -->
-    <path
-        android:fillColor="#2B2F45"
-        android:pathData="M70,52 m-6,0 a6,6 0 1 0 12,0 a6,6 0 1 0 -12,0" />
-
-    <!-- 눈 하이라이트 -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M46,50 m-2,0 a2,2 0 1 0 4,0 a2,2 0 1 0 -4,0" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M72,50 m-2,0 a2,2 0 1 0 4,0 a2,2 0 1 0 -4,0" />
-
-    <!-- 웃는 입 -->
-    <path
-        android:strokeColor="#2B2F45"
-        android:strokeWidth="4"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M46,68 q11,9 22,0" />
-
-    <!-- 볼터치 -->
-    <path
-        android:fillColor="#33FF6161"
-        android:pathData="M36,62 m-4,0 a4,3 0 1 0 8,0 a4,3 0 1 0 -8,0" />
-    <path
-        android:fillColor="#33FF6161"
-        android:pathData="M78,62 m-4,0 a4,3 0 1 0 8,0 a4,3 0 1 0 -8,0" />
+    <!--
+      두 고리가 겹치는 자리는 위·아래 두 군데다. 위쪽에서만 노랑을 되살리면
+      위는 노랑이 앞, 아래는 민트가 앞이 되어 사슬처럼 '엮인' 모양이 나온다.
+      세로로 자르면 그냥 반씩 색칠한 원 두 개로 보인다.
+    -->
+    <group>
+        <clip-path android:pathData="M0,0 h108 v54 h-108 z" />
+        <path
+            android:fillType="evenOdd"
+            android:fillColor="#FFC533"
+            android:pathData="M43,54 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 z
+                              M43,54 m-11,0 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 z" />
+    </group>
 </vector>

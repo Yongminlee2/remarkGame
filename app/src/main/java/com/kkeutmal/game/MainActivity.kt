@@ -1,9 +1,12 @@
 package com.kkeutmal.game
 
 import android.content.Intent
+import android.graphics.LinearGradient
+import android.graphics.Shader
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.kkeutmal.game.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -11,11 +14,38 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var level = AiLevel.NORMAL
 
+    /**
+     * 제목에 그라데이션을 입힌다.
+     *
+     * TextView 는 색을 하나만 받으므로 페인트에 셰이더를 직접 건다.
+     * 셰이더는 픽셀 좌표로 도니까 글자가 실제로 배치된 **뒤에** 폭을 알 수 있다.
+     * 그래서 doOnLayout 처럼 한 번 그려진 다음에 건다.
+     */
+    private fun paintTitle() {
+        val tv = binding.tvTitle
+        tv.post {
+            val w = tv.width.toFloat()
+            if (w <= 0f) return@post
+            tv.paint.shader = LinearGradient(
+                0f, 0f, w, tv.height.toFloat(),
+                intArrayOf(
+                    ContextCompat.getColor(this, R.color.title_grad_start),
+                    ContextCompat.getColor(this, R.color.title_grad_mid),
+                    ContextCompat.getColor(this, R.color.title_grad_end)
+                ),
+                floatArrayOf(0f, 0.5f, 1f),
+                Shader.TileMode.CLAMP
+            )
+            tv.invalidate()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.applySystemBarInsets()
+        paintTitle()
         Wallet.ensureStarterGrant(this)
 
         WordDict.preload(this) // 미리 로드해서 게임 진입을 빠르게

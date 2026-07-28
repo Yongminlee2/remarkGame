@@ -17,6 +17,11 @@
     <color name="player_grad_end">#A05CFF</color>
     <color name="mic_listening">#FF6161</color>
 
+    <!-- 홈 제목 그라데이션: 보라 → 민트 → 노랑. 근흑 배경에서 셋 다 충분히 밝다 -->
+    <color name="title_grad_start">#A78BFA</color>
+    <color name="title_grad_mid">#6EE7C7</color>
+    <color name="title_grad_end">#FFD166</color>
+
     <color name="text_primary">#F4F4F6</color>
     <color name="text_dim">#9C9FB8</color>
     <color name="text_on_accent">#FFFFFF</color>

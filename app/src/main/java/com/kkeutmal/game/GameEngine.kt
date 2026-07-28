@@ -147,24 +147,47 @@ class GameEngine(
         lastWord = word
     }
 
-    /** AI 첫 단어: 잇기 여지가 넉넉한 짧은 상용 명사. 보스 규칙이 있으면 그 규칙도 지킨다. */
-    fun openingWord(): String {
-        repeat(60) {
+    /**
+     * AI 첫 단어. 난이도와 무관하게 **한방단어를 절대 내지 않는다.**
+     *
+     * 첫 단어부터 막히면 손도 못 써 보고 지는 셈이라 어느 난이도에서도 허용하지 않는다.
+     * 기준을 단계적으로 낮추되 **어느 갈래에서도 이어갈 단어가 있는지 반드시 확인한다.**
+     * 예전에는 규칙을 통과하는 아무 단어나 돌려주는 갈래가 있어서 한방단어가 새어 나갔다.
+     *
+     * @param avoidLinks 이 글자들로 이어지는 단어는 피한다 (단어 바꾸기·부활에서 쓴다)
+     */
+    fun openingWord(avoidLinks: Set<Char> = emptySet()): String {
+        fun ok(w: String) = w !in used && (bossRules.isEmpty() || bossRules.acceptsWord(w))
+        fun fresh(w: String) =
+            avoidLinks.isEmpty() || chainMode.linkSyllables(w).none { it in avoidLinks }
+
+        // 1) 이어갈 곳이 아주 넉넉한 짧은 상용 명사 — 평소에는 여기서 끝난다
+        repeat(80) {
             val w = WordDict.commonList[rng.nextInt(WordDict.commonList.size)]
-            if (w.length in 2..3 && w !in used && followUpCount(w, 40) >= 30 &&
-                (bossRules.isEmpty() || bossRules.acceptsWord(w))
-            ) return w
+            if (w.length in 2..3 && ok(w) && fresh(w) && followUpCount(w, 40) >= 30) return w
         }
-        if (bossRules.isNotEmpty()) {
-            val fallback = WordDict.commonList.filter { it !in used && bossRules.acceptsWord(it) }
-            if (fallback.isNotEmpty()) return fallback[rng.nextInt(fallback.size)]
-        }
-        if (bossRules.isNotEmpty() && !bossRules.acceptsWord("사과")) {
-            for (w in WordDict.words) {
-                if (w !in used && bossRules.acceptsWord(w)) return w
+        // 2) 길이 조건은 풀되 이어갈 곳은 여전히 넉넉해야 한다
+        val roomy = WordDict.commonList.filter { ok(it) && fresh(it) && followUpCount(it, 20) >= 10 }
+        if (roomy.isNotEmpty()) return roomy[rng.nextInt(roomy.size)]
+
+        // 3) 상용 풀이 규칙에 다 걸리면 사전 전체에서 찾는다. 여기서도 후속은 확인한다.
+        val wide = ArrayList<String>()
+        for (w in WordDict.words) {
+            if (ok(w) && fresh(w) && followUpCount(w, 8) >= 5) {
+                wide.add(w)
+                if (wide.size >= 200) break
             }
         }
-        return "사과"
+        if (wide.isNotEmpty()) return wide[rng.nextInt(wide.size)]
+
+        // 4) avoidLinks 때문에 다 막힌 것이라면 그 조건만 버리고 다시 본다
+        if (avoidLinks.isNotEmpty()) return openingWord()
+
+        // 5) 이 사전·규칙 조합으로는 이어갈 수 있는 단어가 아예 없다.
+        //    그래도 후속이 가장 많은 것을 골라 최선을 다한다.
+        return WordDict.commonList.filter { ok(it) }.maxByOrNull { followUpCount(it, 60) }
+            ?: WordDict.words.firstOrNull { ok(it) }
+            ?: "사과"
     }
 
     /** 아이템: 낼 수 있는 단어 힌트 */
@@ -194,19 +217,56 @@ class GameEngine(
         return picked.toList()
     }
 
-    /** 아이템: AI가 방금 낸 단어를 다른 단어로 교체. null=교체 불가 */
+    /**
+     * 아이템·부활: AI가 방금 낸 단어를 다른 단어로 교체. null = 교체 불가.
+     *
+     * 바꿨는데 **내가 이어야 할 글자가 그대로면 바꾼 보람이 없다.** 그래서 지금 단어가
+     * 요구하는 글자와 겹치지 않는 단어를 우선으로 고르고, 그런 단어가 없을 때만
+     * 겹치는 것으로 물러선다. 어느 경우든 이어갈 단어가 있는 것만 고른다 —
+     * 돈 주고 쓴 아이템이 한방단어를 물어다 주면 안 된다.
+     *
+     * 이어가기 방식(끝말/같은글자/앞말)도 그대로 따른다. 예전에는 끝 글자 기준으로
+     * 굳어 있어서 앞말잇기 판에서 엉뚱한 단어가 나왔다.
+     */
     fun rerollAiWord(): String? {
+        val current = lastWord
+        val avoid = current?.let { chainMode.linkSyllables(it) }.orEmpty()
         val base = prevWord
-        val starts = if (base == null) null else Dueum.variants(base.last())
-        val newWord = if (starts == null) {
-            openingWord().takeIf { it != lastWord }
+
+        val newWord = if (base == null) {
+            // 아직 AI 첫 단어뿐이다 — 이어야 할 제약이 없으니 새로 뽑는다
+            openingWord(avoidLinks = avoid).takeIf { it != current }
         } else {
-            pickAiWord(starts)
+            pickRerollWord(chainMode.linkSyllables(base), avoid)
         } ?: return null
-        // 기존 단어는 used 에 남겨두고(재사용 금지) lastWord 만 교체
+
+        // 기존 단어는 used 에 남겨 두고(재사용 금지) lastWord 만 교체한다
         used.add(newWord)
         lastWord = newWord
         return newWord
+    }
+
+    /**
+     * 바꿔치기용 단어 고르기.
+     * @param starts 앞 단어에서 이어야 할 글자들
+     * @param avoid  이 글자들로 이어지는 단어는 되도록 피한다
+     */
+    private fun pickRerollWord(starts: Set<Char>, avoid: Set<Char>): String? {
+        val pool = candidatesUnderRules(starts, common = true)
+            .ifEmpty { candidatesUnderRules(starts, common = false) }
+        if (pool.isEmpty()) return null
+
+        val sampled = sample(pool, 120)
+        // 이어갈 곳이 있는 것만 남긴다. 그중 요구 글자가 바뀌는 쪽을 먼저 본다.
+        val alive = sampled.filter { it != lastWord && followUpCount(it, 4) >= 1 }
+        val changed = alive.filter { w -> chainMode.linkSyllables(w).none { it in avoid } }
+
+        return when {
+            changed.isNotEmpty() -> changed[rng.nextInt(changed.size)]
+            alive.isNotEmpty() -> alive[rng.nextInt(alive.size)]
+            // 표본이 전멸했으면 풀 전체에서 이어갈 곳이 가장 많은 것이라도 준다
+            else -> pool.filter { it != lastWord }.maxByOrNull { followUpCount(it, 20) }
+        }
     }
 
     /** AI 응수. null = 항복 */

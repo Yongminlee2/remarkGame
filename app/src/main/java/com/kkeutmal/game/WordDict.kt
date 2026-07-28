@@ -23,9 +23,40 @@ object WordDict {
     private var meanIdx: IntArray? = null
     private var meansFile: RandomAccessFile? = null
 
-    private val mainHandler = Handler(Looper.getMainLooper())
+    // 안드로이드 없이 도는 단위 테스트에서도 이 object 를 건드릴 수 있어야 해서
+    // Looper 를 쓰는 핸들러는 실제로 preload 할 때까지 만들지 않는다.
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
     private val pending = ArrayList<() -> Unit>()
     private var loading = false
+
+    /**
+     * 테스트용: 안드로이드 없이 assets 폴더에서 단어만 올린다.
+     *
+     * GameEngine 은 사전이 있어야 의미 있는 검증이 되는데(한방단어 판정, 후보 탐색 …)
+     * 예전에는 이 object 가 Android Context 를 요구해서 JVM 테스트를 못 돌렸다.
+     * 뜻풀이는 게임 규칙과 무관하므로 올리지 않는다.
+     */
+    @Synchronized
+    internal fun loadWordsForTest(assetsDir: File) {
+        if (ready) return
+        val list = ArrayList<String>(440_000)
+        File(assetsDir, "dict_all.txt").bufferedReader(Charsets.UTF_8).useLines { lines ->
+            for (line in lines) {
+                val w = line.trim()
+                if (w.length >= 2) list.add(w)
+            }
+        }
+        words = list.toTypedArray()
+        File(assetsDir, "dict_common.txt").bufferedReader(Charsets.UTF_8).useLines { lines ->
+            for (line in lines) {
+                val w = line.trim()
+                if (w.length < 2 || !contains(w)) continue
+                commonList.add(w)
+                commonByFirst.getOrPut(w[0]) { ArrayList() }.add(w)
+            }
+        }
+        ready = true
+    }
 
     @Synchronized
     fun preload(context: Context, onReady: (() -> Unit)? = null) {

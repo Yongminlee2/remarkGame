@@ -53,7 +53,16 @@ class GameActivity : AppCompatActivity() {
     private var remainingMs = 0L
     private var secondsLeft = 0
     private var gameOver = false
-    private val hideErrorRunnable = Runnable { binding.tvError.visibility = View.GONE }
+    /**
+     * 지금 보여 주고 있는 힌트. 내 차례가 끝날 때까지 남겨 둔다.
+     * 오답 같은 짧은 메시지가 잠깐 덮더라도 그 메시지가 사라지면 다시 띄운다.
+     */
+    private var activeHint: String? = null
+
+    private val hideErrorRunnable = Runnable {
+        val hint = activeHint
+        if (hint != null) showHintBar(hint) else binding.tvError.visibility = View.GONE
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -208,6 +217,7 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun beginPlayerTurn() {
+        clearHint()          // 새 차례는 깨끗하게 시작한다
         updateRequiredChip()
         val starts = engine.allowedStarts()
         if (starts != null && !engine.hasAnyCandidate(starts)) {
@@ -232,6 +242,7 @@ class GameActivity : AppCompatActivity() {
             }
             is GameEngine.Verdict.Ok -> {
                 stopTimer()
+                clearHint()          // 맞받아쳤으니 힌트는 치운다
                 setInputEnabled(false)
                 binding.etWord.setText("")
                 audio.play("sfx_ok")
@@ -301,8 +312,25 @@ class GameActivity : AppCompatActivity() {
         if (hints.isEmpty()) { showError("힌트로 알려줄 단어가 없어요"); return }
         Wallet.useItem(this, "item_hint")
         audio.play("sfx_ok")
-        showInfo("💡 ${hints.joinToString("  ·  ")}")
+        // 힌트는 자동으로 사라지지 않는다. 내 차례가 끝날 때까지 계속 보인다.
+        activeHint = "💡 ${hints.joinToString("  ·  ")}"
+        handler.removeCallbacks(hideErrorRunnable)
+        showHintBar(activeHint!!)
         refreshItemBar()
+    }
+
+    private fun showHintBar(text: String) {
+        binding.tvError.setTextColor(ContextCompat.getColor(this, R.color.warn))
+        binding.tvError.text = text
+        binding.tvError.visibility = View.VISIBLE
+    }
+
+    /** 내 차례가 끝났다 — 힌트를 치운다 */
+    private fun clearHint() {
+        if (activeHint == null) return
+        activeHint = null
+        handler.removeCallbacks(hideErrorRunnable)
+        binding.tvError.visibility = View.GONE
     }
 
     private fun usePassItem() {
@@ -312,6 +340,7 @@ class GameActivity : AppCompatActivity() {
         if (newWord == null) { showError("AI가 바꿀 단어를 찾지 못했어요"); return }
         Wallet.useItem(this, "item_pass")
         audio.play("sfx_ai")
+        clearHint()          // 이어야 할 글자가 바뀌었으니 앞선 힌트는 못 쓴다
         adapter.add(ChatItem.Sys("🔄 AI의 단어를 바꿨어요"))
         adapter.add(ChatItem.Ai(newWord, WordDict.meaning(newWord)))
         scrollToEnd()
@@ -372,6 +401,7 @@ class GameActivity : AppCompatActivity() {
             override fun onFinish() {
                 binding.timerBar.progress = 0
                 binding.tvTimer.text = "0.0초"
+                clearHint()
                 audio.play("sfx_lose")
                 vibrate(200, 100, 200)
                 adapter.add(ChatItem.Sys("시간 초과! ⏰"))
@@ -472,31 +502,56 @@ class GameActivity : AppCompatActivity() {
 
     /**
      * @param canRevive 부활 아이템을 권할 수 있는 마무리인가.
-     *   진짜로 '져서' 끝났을 때만 true 다. 스스로 항복했거나 이어 갈 단어 자체가
-     *   없는 한방단어 상황에서는 부활해 봐야 같은 자리에서 다시 막힌다.
+     *   진짜로 '져서' 끝났을 때만 true 다. 스스로 항복한 경우는 제외한다.
+     *
+     * 부활하면 AI 단어를 다시 뽑아 준다. 같은 글자 앞에 다시 세워 두면 방금 막힌
+     * 자리에 그대로 서는 셈이라 부활한 보람이 없다. 단어가 바뀌므로 한방단어로
+     * 끝난 판도 부활로 되살릴 수 있다.
      */
     private fun endGame(win: Boolean, reason: String, canRevive: Boolean = true) {
         if (gameOver) return
-        if (!win && canRevive && !reason.contains("한방단어") &&
-            Wallet.itemCount(this, "item_revive") > 0
-        ) {
+        if (!win && canRevive && Wallet.itemCount(this, "item_revive") > 0) {
             stopTimer()
             MaterialAlertDialogBuilder(this)
                 .setTitle("🛡 부활할까요?")
-                .setMessage("부활 아이템을 써서 이어서 할 수 있어요 (보유 ${Wallet.itemCount(this, "item_revive")}개)")
-                .setPositiveButton("부활") { _, _ ->
-                    Wallet.useItem(this, "item_revive")
-                    refreshItemBar()
-                    adapter.add(ChatItem.Sys("🛡 부활했어요!"))
-                    scrollToEnd()
-                    beginPlayerTurn()
-                }
+                .setMessage(
+                    "부활하면 AI 단어를 다시 뽑아 이어서 할 수 있어요 " +
+                        "(보유 ${Wallet.itemCount(this, "item_revive")}개)"
+                )
+                .setPositiveButton("부활") { _, _ -> revive(win, reason) }
                 .setNegativeButton("포기") { _, _ -> finishGame(win, reason) }
                 .setCancelable(false)
                 .show()
             return
         }
         finishGame(win, reason)
+    }
+
+    private fun revive(win: Boolean, reason: String) {
+        Wallet.useItem(this, "item_revive")
+        refreshItemBar()
+        adapter.add(ChatItem.Sys("🛡 부활했어요!"))
+
+        val newWord = engine.rerollAiWord()
+        if (newWord != null) {
+            adapter.add(ChatItem.Sys("🔄 AI가 단어를 다시 냈어요"))
+            adapter.add(ChatItem.Ai(newWord, WordDict.meaning(newWord)))
+            audio.play("sfx_ai")
+        }
+        scrollToEnd()
+
+        // 새 단어로도 이어갈 곳이 없으면 부활이 무의미하다. 아이템만 잃지 않도록
+        // 되돌려 주고 그대로 끝낸다.
+        val starts = engine.allowedStarts()
+        if (starts != null && !engine.hasAnyCandidate(starts)) {
+            Wallet.addItem(this, "item_revive", 1)
+            refreshItemBar()
+            adapter.add(ChatItem.Sys("이어갈 단어가 없어 부활을 되돌렸어요"))
+            scrollToEnd()
+            finishGame(win, reason)
+            return
+        }
+        beginPlayerTurn()
     }
 
     private fun finishGame(win: Boolean, reason: String) {

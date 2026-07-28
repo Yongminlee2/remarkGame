@@ -234,8 +234,10 @@ class GameEngine(
         val base = prevWord
 
         val newWord = if (base == null) {
-            // 아직 AI 첫 단어뿐이다 — 이어야 할 제약이 없으니 새로 뽑는다
-            openingWord(avoidLinks = avoid).takeIf { it != current }
+            // 아직 AI 첫 단어뿐이다 — 이어야 할 제약이 없으니 새로 뽑는다.
+            // openingWord 는 사전이 바닥나면 막다른 단어라도 돌려주므로 여기서 한 번 더 본다.
+            openingWord(avoidLinks = avoid)
+                .takeIf { it != current && followUpCount(it, 1) >= 1 }
         } else {
             pickRerollWord(chainMode.linkSyllables(base), avoid)
         } ?: return null
@@ -261,12 +263,14 @@ class GameEngine(
         val alive = sampled.filter { it != lastWord && followUpCount(it, 4) >= 1 }
         val changed = alive.filter { w -> chainMode.linkSyllables(w).none { it in avoid } }
 
-        return when {
-            changed.isNotEmpty() -> changed[rng.nextInt(changed.size)]
-            alive.isNotEmpty() -> alive[rng.nextInt(alive.size)]
-            // 표본이 전멸했으면 풀 전체에서 이어갈 곳이 가장 많은 것이라도 준다
-            else -> pool.filter { it != lastWord }.maxByOrNull { followUpCount(it, 20) }
-        }
+        if (changed.isNotEmpty()) return changed[rng.nextInt(changed.size)]
+        if (alive.isNotEmpty()) return alive[rng.nextInt(alive.size)]
+
+        // 표본이 전멸했으면 풀 전체에서 이어갈 곳이 가장 많은 것을 찾는다.
+        // 그마저 막다른 단어면 **바꿔 주지 않는다** — null 을 돌려주면 아이템도
+        // 소모되지 않는다. 돈 주고 쓴 아이템이 한방단어를 물어다 주는 것보다 낫다.
+        val best = pool.filter { it != lastWord }.maxByOrNull { followUpCount(it, 20) }
+        return best?.takeIf { followUpCount(it, 1) >= 1 }
     }
 
     /** AI 응수. null = 항복 */

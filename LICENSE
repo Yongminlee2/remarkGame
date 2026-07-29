@@ -1,0 +1,78 @@
+MIT License
+
+Copyright (c) 2026 Yongmin Lee (LYM)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+
+이 저장소에는 MIT 가 적용되지 않는 데이터·그래픽이 함께 들어 있습니다.
+위 MIT 라이선스는 **직접 작성한 코드에만** 적용됩니다.
+
+The MIT license above covers the original source code only. This repository
+also bundles third-party data and assets under their own licenses:
+
+--------------------------------------------------------------------------------
+
+■ 단어 뜻풀이 — app/src/main/assets/means.bin, means.idx
+  Word definitions
+
+  출처 / Source: 국립국어원 표준국어대사전 (National Institute of Korean Language,
+                 Standard Korean Language Dictionary) — https://stdict.korean.go.kr
+  라이선스 / License: CC BY-SA 2.0 KR
+                      https://creativecommons.org/licenses/by-sa/2.0/kr/
+
+  **동일조건변경허락(ShareAlike)**: 이 데이터 또는 이를 가공한 결과물을 배포할 때는
+  같은 CC BY-SA 2.0 KR 조건으로 공개해야 합니다. 저작자 표시도 유지해야 합니다.
+
+  가공 내용: 동음이의어 중 널리 쓰이는 뜻을 골라 뽑았고(tools/extract_stdict.py),
+  원본에 뜻풀이가 없는 파생어·합성어는 어근에서 규칙으로 생성했습니다
+  (tools/gen_means.py, 전체의 약 3.8%). 용례(예문)는 문학작품·기사 인용이 섞여 있어
+  개수만 참고하고 본문에는 포함하지 않았습니다.
+
+■ 단어 목록 — app/src/main/assets/dict_all.txt, dict_common.txt
+  Word list
+
+  출처 / Source:
+    - han-dle/pd-korean-noun-list-for-wordles (CC0)
+    - JJoriping/KKuTu — db.sql 의 kkutu_ko 테이블
+  단어 목록 자체는 사실의 나열이라 저작권 보호 대상이 아닙니다.
+
+■ 아바타·UI 그래픽 — app/src/main/res/drawable-nodpi/
+  Avatar and UI graphics
+
+  출처 / Source: Kenney — Shape Characters, Game Icons (https://kenney.nl)
+  라이선스 / License: CC0 1.0 (Public Domain)
+
+■ 효과음·배경음악 — app/src/main/res/raw/
+  Sound effects and background music
+
+  전부 직접 합성했습니다(tools/AudioGen.java, BgmGen.java).
+  MIT 로 함께 배포합니다.
+
+--------------------------------------------------------------------------------
+
+정리하면 / In short:
+
+  코드·음원        → MIT (자유롭게 사용 가능)
+  뜻풀이 데이터    → CC BY-SA 2.0 KR (저작자 표시 + 동일조건변경허락 필수)
+  그래픽           → CC0 (제약 없음)
+
+뜻풀이 데이터를 가져다 쓰실 경우 CC BY-SA 조건을 반드시 확인하세요.
+앱 안에서는 '정보' 화면에 출처와 라이선스를 표시하고 있습니다.

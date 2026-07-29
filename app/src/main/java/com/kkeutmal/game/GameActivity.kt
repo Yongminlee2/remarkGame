@@ -81,7 +81,10 @@ class GameActivity : AppCompatActivity() {
                 cfg.aiLevel,
                 noTimer = false,
                 bossRules = cfg.rules,
-                chainMode = cfg.chainMode
+                chainMode = cfg.chainMode,
+                // 모험은 스테이지가 한방단어 허용 여부를 정한다. 같은 '보통' 이라도
+                // 16~30스테이지에서는 한방단어가 나오면 안 된다.
+                allowHanbang = cfg.allowHanbang
             )
             binding.tvDifficulty.text = "${stageNumber}스테이지"
             binding.tvGoal.visibility = View.VISIBLE

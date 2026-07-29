@@ -2,18 +2,32 @@ package com.kkeutmal.game
 
 import kotlin.random.Random
 
+/**
+ * 제한시간은 단계마다 대략 1.5배씩 벌어지게 잡았다.
+ *
+ * 예전에는 60/45/20/12 였는데 쉬움에서 보통으로 갈 때 45초가 20초로 뚝 떨어져,
+ * 한 단계만 올렸는데도 갑자기 쫓기는 느낌이 났다. 전체적으로도 짧았다 —
+ * 끝말잇기는 '이 글자로 시작하는 말'을 떠올려야 해서 생각할 틈이 있어야 한다.
+ */
 enum class AiLevel(val label: String, val timerSec: Int, val desc: String) {
-    VERY_EASY("매우쉬움", 60, "AI가 쉬운 단어만 내고 한방단어는 절대 안 써요"),
-    EASY("쉬움", 45, "AI가 잇기 좋은 단어를 골라줘요"),
-    NORMAL("보통", 20, "AI가 무난하게 받아쳐요"),
-    HARD("어려움", 12, "AI가 사전 전체로 압박해요 (한방단어 주의!)")
+    VERY_EASY("매우쉬움", 90, "AI가 이어가기 가장 쉬운 단어만 골라줘요"),
+    EASY("쉬움", 60, "AI가 잇기 좋은 단어를 골라줘요"),
+    NORMAL("보통", 45, "AI가 무난하게 받아쳐요 (가끔 한방단어!)"),
+    HARD("어려움", 30, "AI가 사전 전체로 압박해요 (한방단어 주의!)")
 }
 
+/**
+ * @param allowHanbang AI 가 한방단어(이을 말이 없는 단어)를 써도 되는가.
+ *   사용자가 고르는 값이 아니라 **판을 만들 때 코드가 정해서 넘기는 값**이다.
+ *   자유 대전은 늘 허용하고(실제로 쓰는 건 보통·어려움뿐), 모험은 스테이지가 정한다 —
+ *   같은 '보통' 이라도 모험 16~30스테이지에서는 한방단어가 나오면 안 되기 때문이다.
+ */
 class GameEngine(
     val level: AiLevel,
     val noTimer: Boolean,
     val bossRules: List<BossRule> = emptyList(),
-    val chainMode: ChainMode = ChainMode.TAIL
+    val chainMode: ChainMode = ChainMode.TAIL,
+    val allowHanbang: Boolean = true
 ) {
 
     sealed class Verdict {
@@ -285,32 +299,66 @@ class GameEngine(
         return pickAiWord(starts)
     }
 
+    /**
+     * 매우쉬움·쉬움·보통이 공통으로 쓰는 고르기.
+     *
+     * 후보를 '이어갈 수 있는 말이 많은 순'으로 줄 세운 뒤 난이도에 맞는 구간에서 뽑는다.
+     * 예전에는 난이도마다 기준(followUpCount >= 8, >= 5, >= 3)이 따로 놀아서
+     * 한 단계 올릴 때 얼마나 어려워지는지 가늠이 안 됐다. 같은 자를 쓰면
+     * **뒤쪽 구간을 볼수록 어려워진다**가 눈에 보인다.
+     *
+     * 후속이 0인 단어(한방단어)는 여기서 절대 고르지 않는다.
+     *
+     * @param band 줄 세운 목록에서 볼 구간. 0.0 이 가장 이어가기 쉬운 쪽.
+     */
+    private fun pickFromBand(starts: Set<Char>, band: ClosedFloatingPointRange<Double>): String? {
+        var pool = candidatesUnderRules(starts, common = true)
+        // 상용 단어가 모자라면(보스 규칙 등) 사전 전체에서 짧은 말로 보충한다
+        if (pool.size < 8) {
+            pool = pool + candidatesUnderRules(starts, common = false).filter { it.length <= 4 }
+        }
+        if (pool.isEmpty()) return null
+
+        // followUpCount 는 사전을 훑어서 무겁다. 표본만 줄 세운다.
+        val ranked = sample(pool, 24)
+            .map { it to followUpCount(it, 60) }
+            .filter { it.second > 0 }          // 한방단어 제외
+            .sortedByDescending { it.second }
+        if (ranked.isEmpty()) return null
+
+        val from = (ranked.size * band.start).toInt().coerceIn(0, ranked.size - 1)
+        val to = (ranked.size * band.endInclusive).toInt().coerceIn(from + 1, ranked.size)
+        val slice = ranked.subList(from, to)
+        return slice[rng.nextInt(slice.size)].first
+    }
+
+    /** 이 판에서 AI 가 한방단어를 노려도 되는 때인가 */
+    private fun canUseHanbang(): Boolean =
+        allowHanbang || BossRule.AI_HANBANG in bossRules
+
+    /** 이을 말이 없는 단어(한방단어) 하나. 없으면 null */
+    private fun findHanbang(starts: Set<Char>): String? =
+        sample(candidatesUnderRules(starts, common = false), 40)
+            .firstOrNull { followUpCount(it, 1) == 0 }
+
     private fun pickAiWord(starts: Set<Char>): String? {
         return when (level) {
-            AiLevel.VERY_EASY -> {
-                // 한방단어(이을 단어 0개) 절대 금지 + 플레이어가 잇기 아주 좋은 단어만
-                var pool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 12) >= 8 }
-                if (pool.isEmpty()) pool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 2) >= 1 }
-                if (pool.isEmpty()) null
-                else sample(pool, 10).maxByOrNull { followUpCount(it, 60) }
-            }
-            AiLevel.EASY -> {
-                val pool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 8) >= 5 }
-                if (pool.isEmpty()) null
-                else sample(pool, 10).maxByOrNull { followUpCount(it, 60) }
-            }
+            // 이어갈 곳이 가장 많은 쪽에서 고른다
+            AiLevel.VERY_EASY -> pickFromBand(starts, 0.0..0.15)
+            AiLevel.EASY -> pickFromBand(starts, 0.15..0.45)
             AiLevel.NORMAL -> {
-                var pool = candidatesUnderRules(starts, common = true).filter { followUpCount(it, 4) >= 3 }
-                if (pool.isEmpty()) {
-                    pool = candidatesUnderRules(starts, common = false).filter { it.length <= 4 && followUpCount(it, 4) >= 3 }
+                // 중간 구간이 기본. 다만 판이 좀 진행되면 가끔 한방단어로 찌른다.
+                if (canUseHanbang() && round >= 8 && rng.nextInt(100) < 18) {
+                    findHanbang(starts)?.let { return it }
                 }
-                if (pool.isEmpty()) null else pool[rng.nextInt(pool.size)]
+                pickFromBand(starts, 0.45..0.75)
             }
+            // 어려움은 예전 그대로 — 플레이어 선택지를 좁히고 6라운드부터 한방단어를 노린다
             AiLevel.HARD -> {
                 val pool = candidatesUnderRules(starts, common = false)
                 if (pool.isEmpty()) return null
                 val sampled = sample(pool, 40)
-                val canKill = round >= 6 || BossRule.AI_HANBANG in bossRules
+                val canKill = canUseHanbang() && round >= 6
                 val scored = sampled.map { it to followUpCount(it, 30) }
                 val safe = scored.filter { it.second > 0 }
                 val killers = scored.filter { it.second == 0 }

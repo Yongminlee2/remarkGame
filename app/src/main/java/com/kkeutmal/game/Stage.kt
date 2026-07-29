@@ -113,27 +113,43 @@ object Stage {
         else -> AiLevel.HARD
     }
 
-    /** 스테이지가 오를수록 더 까다로운 제약이 나오게 후보를 넓힌다 */
+    /**
+     * 스테이지가 오를수록 후보를 **넓힌다**. 어려운 것만 남기지 않는다.
+     *
+     * 예전에는 20스테이지 이상에서 쉬운 규칙을 아예 빼고 [EXACT_LEN_3, MIN_LEN_4,
+     * EXACT_LEN_4] 셋만 남겼다. 그런데 이 셋 중 둘이 '네 글자' 계열이라
+     * 실제로 오래 머무는 구간에서 네 글자 조건만 계속 만나게 됐다.
+     *
+     * 난이도는 제한시간(30→8초)과 AI 레벨이 이미 올리고 있다.
+     * 단어 제약은 판마다 다른 맛을 내는 쪽이 낫다.
+     */
     private fun wordRulePool(n: Int): List<BossRule> = when {
         n <= 9 -> EASY_RULES
         n <= 19 -> EASY_RULES + MID_RULES
-        else -> MID_RULES + HARD_RULES
+        else -> EASY_RULES + MID_RULES + HARD_RULES
     }
 
     /**
-     * 일반 스테이지도 단어 제약을 하나씩 갖는다.
+     * 일반 스테이지도 조건을 하나씩 갖는다.
      *
-     * 스테이지마다 독립적으로 무작위를 뽑으면 규칙 종류가 3~6개뿐이라
-     * "3글자 이상"이 세 판 연속 나오는 일이 흔하다. 그래서 풀 순서를 한 번 고정해두고
-     * 스테이지 번호로 그 안을 순서대로 돈다 — 같은 티어 안에서는 인접한 스테이지가
-     * 절대 같은 규칙을 갖지 않고, 같은 스테이지는 언제나 같은 규칙이 나온다.
+     * 스테이지마다 독립적으로 무작위를 뽑으면 후보가 몇 개 안 돼서 같은 규칙이
+     * 연달아 나온다. 그래서 후보 순서를 한 번 고정해 두고 순서대로 돈다 —
+     * 인접한 스테이지는 절대 같은 조건을 갖지 않고, 같은 스테이지는 언제나 같은 조건이 나온다.
+     *
+     * 세는 기준은 **스테이지 번호가 아니라 '보스가 아닌 스테이지의 순번'** 이다.
+     * 번호를 그대로 쓰면 보스 주기(5)와 후보 개수가 맞아떨어질 때
+     * 특정 후보가 보스 자리에만 배정돼 **한 번도 안 나오는** 일이 생긴다.
+     * 실제로 후보가 5개이던 구간에서 규칙 하나가 통째로 사라져 있었다.
      */
     private fun normalMod(n: Int): Mod? {
         if (n < FIRST_RULED_STAGE) return null
         val pool = modPool(n)
         val order = pool.shuffled(Random(pool.size * 7919L))
-        return order[n % order.size]
+        return order[nonBossOrdinal(n) % order.size]
     }
+
+    /** n 이하의 '보스가 아닌 스테이지' 개수. 보스를 건너뛰어도 1씩 늘어난다. */
+    private fun nonBossOrdinal(n: Int): Int = n - n / BOSS_EVERY
 
     /** 이 스테이지에서 나올 수 있는 특수 조건 후보. 오를수록 넓어진다 */
     private fun modPool(n: Int): List<Mod> {

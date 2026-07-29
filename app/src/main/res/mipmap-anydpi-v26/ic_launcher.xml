@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  전경은 한글이 들어가서 벡터로 못 만든다(벡터 드로어블에는 글자 요소가 없다).
+  tools/make_icon.py 가 밀도별 PNG 로 구워 mipmap-*/ic_launcher_fg.png 에 넣는다.
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_bg" />
-    <foreground android:drawable="@drawable/ic_launcher_fg" />
+    <foreground android:drawable="@mipmap/ic_launcher_fg" />
 </adaptive-icon>

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  아이콘 배경. 앱 안에서 쓰는 보라 액센트와 같은 계열로 가되,
-  전경의 노랑·민트 고리가 확실히 떠오르도록 아래쪽을 더 어둡게 눌렀다.
+  아이콘 배경. 전경의 노랑·민트 낱말 타일이 확실히 떠 보이도록
+  짙은 남색 계열로 눌렀다. 색값은 tools/make_icon.py 의 BG_TOP/MID/BOT 와 같아야
+  런처 아이콘과 스토어 아이콘이 같은 색으로 보인다.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <gradient
         android:angle="315"
         android:type="linear"
-        android:startColor="#8B7BFF"
-        android:centerColor="#5B4CD6"
-        android:endColor="#2A2064" />
+        android:startColor="#3A3E78"
+        android:centerColor="#212348"
+        android:endColor="#12132A" />
 </shape>

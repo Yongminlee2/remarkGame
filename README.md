@@ -53,6 +53,61 @@ AI와 1:1로 대결하는 한국어 끝말잇기 안드로이드 게임. 채팅�
 | 상점 | 아바타 + 아이템 5종 |
 | 아이템 | ⏰ 시간+15초(60🪙) · 💡 힌트 — 낼 수 있는 단어 3개 추천(80🪙) · 🔄 AI 단어 바꾸기(120🪙) · 🎯 2배 획득(120🪙) · 🛡 부활(200🪙) |
 
+## 새 컴퓨터에서 시작하기
+
+깃에는 **소스와 자산이 전부** 들어 있다 — 43만 단어 사전, 뜻풀이 37MB,
+BGM 20곡, 아바타 PNG까지. 따로 챙길 것은 서명 키 두 개뿐이다.
+
+| 필요한 것 | 어디서 |
+|---|---|
+| 이 저장소 | `git clone` |
+| Android Studio (JDK 21 번들 포함) + Android SDK | 설치 |
+| `wordchain.jks` · `keystore.properties` | **따로 백업해 둔 것** (깃에 없음, 있으면 안 됨) |
+
+### 1. JDK 위치 알려주기
+
+`org.gradle.java.home` 은 기계마다 다르므로 **프로젝트가 아니라 내 계정 폴더**에 적는다.
+`JAVA_HOME` 이 이미 JDK 17 이상을 가리키면 이 단계는 건너뛴다.
+
+```bash
+# Windows — ~/.gradle/gradle.properties 에 한 줄
+org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr
+```
+
+> macOS 는 `/Applications/Android Studio.app/Contents/jbr/Contents/Home`,
+> Linux 는 `~/android-studio/jbr` 근처다.
+>
+> ⚠️ PATH 에 옛날 Java 8 이 잡혀 있으면 이 설정 없이는 빌드가 깨진다.
+> AGP 9 는 JDK 17 이상이 필요하다.
+
+### 2. Android SDK 위치 알려주기
+
+Android Studio 로 프로젝트를 한 번 열면 `local.properties` 가 자동으로 생긴다.
+명령줄만 쓴다면 직접 만든다(이 파일도 깃에 올리지 않는다).
+
+```
+sdk.dir=C:\\Users\\<계정>\\AppData\\Local\\Android\\Sdk
+```
+
+### 3. 서명 키 되돌려 놓기
+
+백업해 둔 두 파일을 저장소 루트에 놓는다. `.gitignore` 에 있어서 다시 커밋되지 않는다.
+
+```
+WordChain/
+├── wordchain.jks          ← 이걸 잃어버리면 앱 업데이트를 영영 못 올린다
+└── keystore.properties    ← storeFile 이 실제 .jks 파일명과 같은지 확인할 것
+```
+
+> `keystore.properties` 의 `storeFile` 이 실제 파일명과 다르면 **오류 없이 서명 없는
+> AAB 가 나온다.** 빌드 설정이 "키스토어가 없으면 서명 없이 빌드"로 되어 있어서다.
+> 실제로 이것 때문에 플레이스토어 업로드가 한 번 거부됐다.
+> 서명됐는지는 이렇게 확인한다:
+>
+> ```bash
+> keytool -printcert -jarfile app/build/outputs/bundle/release/app-release.aab
+> ```
+
 ## 빌드
 
 ```bash

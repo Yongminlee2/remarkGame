@@ -50,6 +50,38 @@ class StageVarietyTest {
     }
 
     @Test
+    fun `네 글자 계열이 연달아 나오지 않는다`() {
+        // '네 글자 단어만'과 '4글자 이상'은 서로 다른 규칙이지만 체감이 거의 같다.
+        // 둘이 붙어 나오면 같은 조건을 두 판 연속 만난 것처럼 느껴진다.
+        val bad = mutableListOf<String>()
+        for (n in 2 until 300) {
+            if (Stage.isBossStage(n) || Stage.isBossStage(n + 1)) continue
+            val a = Stage.configFor(n).rules
+            val b = Stage.configFor(n + 1).rules
+            if (a.any { it in fourLetterRules } && b.any { it in fourLetterRules }) {
+                bad += "$n→${n + 1}"
+            }
+        }
+        assertTrue("네 글자 계열이 연달아 나오는 구간: $bad", bad.isEmpty())
+    }
+
+    @Test
+    fun `네 글자 계열은 다른 조건보다 드물게 나온다`() {
+        var four = 0
+        var others = 0
+        for (n in 2..200) {
+            val cfg = Stage.configFor(n)
+            val words = cfg.rules.filter { it.wordConstraint }
+            if (words.isEmpty()) continue
+            if (words.any { it in fourLetterRules }) four++ else others++
+        }
+        // 단어 제약 7종 중 둘이 네 글자 계열이다. 같은 빈도라면 약 29% 가 되는데
+        // 절반 빈도로 낮췄으니 그보다 확실히 적어야 한다.
+        val pct = 100.0 * four / (four + others)
+        assertTrue("네 글자 계열이 단어 제약의 %.0f%% — 아직 잦다".format(pct), pct <= 22.0)
+    }
+
+    @Test
     fun `높은 스테이지에서도 규칙 종류가 넉넉하다`() {
         // 후보가 좁으면 무슨 수를 써도 같은 규칙이 자주 돌아온다.
         val kinds = (20..200).map { Stage.configFor(it) }

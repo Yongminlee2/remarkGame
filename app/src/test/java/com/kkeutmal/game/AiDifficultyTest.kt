@@ -111,11 +111,10 @@ class AiDifficultyTest {
 
     @Test
     fun `제한시간은 난이도가 오를수록 짧아진다`() {
+        // 낙차 크기는 재지 않는다. 한때 단계마다 고르게 벌어지도록 90/60/45/30 으로
+        // 늘려 봤지만 직접 해 보니 시간이 남아돌아 긴장이 없었다. 낙차 자체가
+        // '난이도를 올렸다'는 체감이라, 여기서는 순서만 지켜지는지 본다.
         val secs = AiLevel.entries.map { it.timerSec }
         assertTrue("제한시간이 단조 감소하지 않는다: $secs", secs.zipWithNext().all { it.first > it.second })
-        // 한 단계 건너뛸 때 절반 아래로 뚝 떨어지면 체감이 급격해진다
-        for ((a, b) in secs.zipWithNext()) {
-            assertTrue("$a 초 → $b 초 는 낙차가 너무 크다", b * 2 > a)
-        }
     }
 }

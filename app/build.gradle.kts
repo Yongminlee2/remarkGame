@@ -22,8 +22,8 @@ android {
         applicationId = "com.kkeutmal.game"
         minSdk = 26
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.3.10"
+        versionCode = 12
+        versionName = "1.3.11"
     }
 
     signingConfigs {

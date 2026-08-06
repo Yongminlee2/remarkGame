@@ -22,15 +22,16 @@ class AboutActivity : AppCompatActivity() {
 
     companion object {
         const val MAIL = "dydals5678@gmail.com"
-        const val GITHUB = "https://github.com/Yongminlee2/remarkGame"
 
         /**
-         * 방침·지원 문서는 소스 저장소가 아니라 **별도의 legal 저장소**에 둔다.
+         * 바깥으로 나가는 링크는 모두 **legal 저장소**를 가리킨다.
          *
-         * remarkGame 은 언제든 private 으로 돌릴 수 있는데, 그러면 거기를 가리키던
-         * 개인정보처리방침 링크가 404 가 된다. 방침 링크가 죽는 것은 스토어 정책
-         * 위반이라 앱이 내려갈 수 있다. legal 저장소는 그래서 계속 공개로 둔다.
+         * 예전에는 소스 저장소(remarkGame)를 가리켰다. 그런데 그 저장소는 언제든
+         * private 으로 돌릴 수 있고, 그러면 링크가 전부 404 가 된다.
+         * 특히 **개인정보처리방침 링크가 죽으면 스토어 정책 위반**이라 앱이 내려갈 수 있다.
+         * 그래서 문서만 따로 떼어 계속 공개로 둘 legal 저장소에 두고, 앱은 그쪽만 본다.
          */
+        const val DOCS = "https://yongminlee2.github.io/legal/wordchain/"
         const val PRIVACY = "https://yongminlee2.github.io/legal/wordchain/privacy.html"
         const val SUPPORT = "https://yongminlee2.github.io/legal/wordchain/support.html"
     }
@@ -91,8 +92,8 @@ class AboutActivity : AppCompatActivity() {
                 "메일 앱을 찾을 수 없어요"
             )
         }
-        binding.tvGithub.setOnClickListener {
-            open(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB)), "브라우저를 찾을 수 없어요")
+        binding.tvDocs.setOnClickListener {
+            open(Intent(Intent.ACTION_VIEW, Uri.parse(DOCS)), "브라우저를 찾을 수 없어요")
         }
         binding.tvSupport.setOnClickListener {
             open(Intent(Intent.ACTION_VIEW, Uri.parse(SUPPORT)), "브라우저를 찾을 수 없어요")

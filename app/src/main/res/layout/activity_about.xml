@@ -77,15 +77,14 @@
                 android:textIsSelectable="true" />
 
             <TextView
-                android:id="@+id/tvGithub"
+                android:id="@+id/tvDocs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="4dp"
                 android:paddingBottom="4dp"
-                android:text="🔗  github.com/Yongminlee2/remarkGame"
+                android:text="🔗  앱 소개 · 문서"
                 android:textColor="@color/accent2"
-                android:textSize="14sp"
-                android:textIsSelectable="true" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/tvSupport"

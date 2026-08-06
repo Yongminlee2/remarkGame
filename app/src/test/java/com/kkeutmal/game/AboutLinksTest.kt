@@ -19,9 +19,9 @@ import org.junit.Test
 class AboutLinksTest {
 
     private val outward = mapOf(
+        "앱 소개" to AboutActivity.DOCS,
         "개인정보처리방침" to AboutActivity.PRIVACY,
-        "지원" to AboutActivity.SUPPORT,
-        "소스" to AboutActivity.GITHUB
+        "지원" to AboutActivity.SUPPORT
     )
 
     @Test
@@ -33,9 +33,8 @@ class AboutLinksTest {
     }
 
     @Test
-    fun `방침과 지원은 private 이 될 수 있는 소스 저장소를 가리키지 않는다`() {
-        for (name in listOf("개인정보처리방침", "지원")) {
-            val url = outward.getValue(name)
+    fun `바깥 링크는 private 이 될 수 있는 소스 저장소를 가리키지 않는다`() {
+        for ((name, url) in outward) {
             assertFalse(
                 "$name 링크가 소스 저장소를 가리킨다. remarkGame 이 private 이 되면 404 가 " +
                     "된다 — legal 저장소를 쓸 것: $url",
@@ -49,10 +48,10 @@ class AboutLinksTest {
     }
 
     @Test
-    fun `방침과 지원은 서로 다른 문서를 가리킨다`() {
+    fun `세 링크는 서로 다른 문서를 가리킨다`() {
         assertTrue(
-            "방침과 지원 링크가 같은 곳을 가리킨다",
-            AboutActivity.PRIVACY != AboutActivity.SUPPORT
+            "링크가 서로 겹친다: $outward",
+            outward.values.toSet().size == outward.size
         )
     }
 }

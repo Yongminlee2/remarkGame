@@ -192,24 +192,39 @@ AI와 1:1로 겨루는 한국어 끝말잇기입니다.
 
 ## 개인정보처리방침 URL
 
-**정식 출시 때 이 주소로 바꾼다.** (2026-08-06 확인, 200 응답)
-
 ```
 https://yongminlee2.github.io/legal/wordchain/privacy.html
 ```
 
-지원 페이지도 같은 곳에 있다 — `.../wordchain/support.html`
+지원 페이지 `.../wordchain/support.html` · 앱 소개 `.../wordchain/`
+(세 주소 모두 2026-08-06 에 200 응답 확인)
 
-현재 콘솔에 들어가 있는 주소는 아래쪽이다. 검토 중에는 건드리지 않는다.
+> **왜 별도 저장소인가.** 예전 주소는 소스 저장소를 가리켰다
+> (`github.com/Yongminlee2/remarkGame/blob/main/docs/PRIVACY.md`).
+> remarkGame 을 private 으로 돌리는 순간 그 주소가 404 가 되는데,
+> **방침 링크가 죽은 앱은 스토어에서 내려갈 수 있다.**
+> 그래서 문서만 떼어 계속 공개로 둘 `legal` 저장소에 두었다.
+> 앱 안 「정보」 화면도 legal 쪽만 본다 — `AboutActivity.DOCS/PRIVACY/SUPPORT`,
+> 되돌아가지 않도록 `AboutLinksTest` 로 묶어 두었다.
 
-```
-https://github.com/Yongminlee2/remarkGame/blob/main/docs/PRIVACY.md
-```
+---
 
-> **왜 별도 저장소인가.** remarkGame 을 private 으로 돌리는 순간 위 주소가 404 가
-> 된다. 방침 링크가 죽은 앱은 스토어에서 내려갈 수 있다. 그래서 방침·지원 문서만
-> 계속 공개로 둘 `legal` 저장소(github.com/Yongminlee2/legal)에 따로 두었다.
-> 앱 안 「정보」 화면의 링크는 이미 legal 쪽을 가리킨다 — `AboutActivity.PRIVACY`.
+## URL 갈아끼우기 — 콘솔에서 고칠 세 곳
+
+방침 URL 칸은 **한 곳이 아니다.** 하나만 바꾸면 나머지가 옛 주소로 남아
+나중에 경고가 뜬다. 순서대로 셋 다 확인할 것.
+
+| # | 위치 | 칸 | 넣을 값 |
+|---|---|---|---|
+| 1 | 앱 콘텐츠 → 개인정보처리방침 | 개인정보처리방침 URL | `.../wordchain/privacy.html` |
+| 2 | 앱 콘텐츠 → 데이터 보안 → 개요 | 개인정보처리방침 URL | 같은 주소 |
+| 3 | 기본 스토어 등록정보 → 연락처 세부정보 | 웹사이트 | `.../wordchain/` |
+
+- 1번과 2번은 **서로 다른 양식**이다. 2번은 데이터 보안 설문을 처음 화면부터
+  끝까지 「다음」으로 넘겨 **제출**해야 저장된다. 중간에 나오면 안 바뀐다.
+- 3번 웹사이트 칸은 선택 항목이라 비워도 되지만, 넣어 뒀다면 여기도 옛 주소다.
+- 셋 다 고친 뒤 각 화면 오른쪽 위 **「변경사항 저장」**, 마지막에
+  **「검토 후 게시」**(또는 개요 화면의 게시 버튼)까지 눌러야 실제로 반영된다.
 
 ---
 

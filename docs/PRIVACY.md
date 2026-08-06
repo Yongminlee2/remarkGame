@@ -1,5 +1,14 @@
 # 개인정보처리방침 · Privacy Policy
 
+> ⚠️ **이것은 보관용 사본이다. 효력 있는 원본은 legal 저장소에 있다.**
+>
+> https://yongminlee2.github.io/legal/wordchain/privacy.html
+>
+> 플레이 콘솔과 앱 안 「정보」 화면이 가리키는 곳도 위 주소다.
+> 이 저장소는 언제든 private 으로 돌릴 수 있어서, 방침 원본을 여기 두면
+> 링크가 죽는다. **고칠 일이 생기면 legal 쪽을 고칠 것.**
+> 양쪽 문구가 어긋나 보이면 legal 쪽이 맞다.
+
 **앱 이름:** 끝말잇기 (WordChain)
 **패키지명:** `com.kkeutmal.game`
 **최종 수정:** 2026년 7월

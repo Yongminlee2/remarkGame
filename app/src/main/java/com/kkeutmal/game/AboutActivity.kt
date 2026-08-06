@@ -23,6 +23,16 @@ class AboutActivity : AppCompatActivity() {
     companion object {
         const val MAIL = "dydals5678@gmail.com"
         const val GITHUB = "https://github.com/Yongminlee2/remarkGame"
+
+        /**
+         * 방침·지원 문서는 소스 저장소가 아니라 **별도의 legal 저장소**에 둔다.
+         *
+         * remarkGame 은 언제든 private 으로 돌릴 수 있는데, 그러면 거기를 가리키던
+         * 개인정보처리방침 링크가 404 가 된다. 방침 링크가 죽는 것은 스토어 정책
+         * 위반이라 앱이 내려갈 수 있다. legal 저장소는 그래서 계속 공개로 둔다.
+         */
+        const val PRIVACY = "https://yongminlee2.github.io/legal/wordchain/privacy.html"
+        const val SUPPORT = "https://yongminlee2.github.io/legal/wordchain/support.html"
     }
 
     private lateinit var binding: ActivityAboutBinding
@@ -83,6 +93,12 @@ class AboutActivity : AppCompatActivity() {
         }
         binding.tvGithub.setOnClickListener {
             open(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB)), "브라우저를 찾을 수 없어요")
+        }
+        binding.tvSupport.setOnClickListener {
+            open(Intent(Intent.ACTION_VIEW, Uri.parse(SUPPORT)), "브라우저를 찾을 수 없어요")
+        }
+        binding.tvPrivacyPolicy.setOnClickListener {
+            open(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY)), "브라우저를 찾을 수 없어요")
         }
 
         binding.tvMeaningNote.text = meaningNote

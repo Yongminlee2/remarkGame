@@ -192,12 +192,24 @@ AI와 1:1로 겨루는 한국어 끝말잇기입니다.
 
 ## 개인정보처리방침 URL
 
+**정식 출시 때 이 주소로 바꾼다.** (2026-08-06 확인, 200 응답)
+
+```
+https://yongminlee2.github.io/legal/wordchain/privacy.html
+```
+
+지원 페이지도 같은 곳에 있다 — `.../wordchain/support.html`
+
+현재 콘솔에 들어가 있는 주소는 아래쪽이다. 검토 중에는 건드리지 않는다.
+
 ```
 https://github.com/Yongminlee2/remarkGame/blob/main/docs/PRIVACY.md
 ```
 
-> GitHub Pages 를 켜면 `https://yongminlee2.github.io/remarkGame/PRIVACY` 같은
-> 더 깔끔한 주소도 쓸 수 있다. 위 주소도 공개 URL 이라 심사에는 문제없다.
+> **왜 별도 저장소인가.** remarkGame 을 private 으로 돌리는 순간 위 주소가 404 가
+> 된다. 방침 링크가 죽은 앱은 스토어에서 내려갈 수 있다. 그래서 방침·지원 문서만
+> 계속 공개로 둘 `legal` 저장소(github.com/Yongminlee2/legal)에 따로 두었다.
+> 앱 안 「정보」 화면의 링크는 이미 legal 쪽을 가리킨다 — `AboutActivity.PRIVACY`.
 
 ---
 

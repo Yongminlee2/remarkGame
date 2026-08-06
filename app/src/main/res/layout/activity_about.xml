@@ -88,6 +88,16 @@
                 android:textIsSelectable="true" />
 
             <TextView
+                android:id="@+id/tvSupport"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:text="💬  지원 · 자주 묻는 것"
+                android:textColor="@color/accent2"
+                android:textSize="14sp" />
+
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -113,6 +123,17 @@
             android:text="이 앱은 개인정보를 수집하지 않습니다. 인터넷 권한이 없어 어떤 데이터도 외부로 전송되지 않으며, 광고와 분석 도구를 사용하지 않습니다.\n\n게임 기록은 기기 안에만 저장되고 앱을 삭제하면 함께 지워집니다.\n\n마이크 권한은 음성으로 단어를 입력할 때만 쓰이며, 음성을 녹음하거나 저장하지 않습니다. 허용하지 않아도 키보드로 게임할 수 있습니다."
             android:textColor="@color/text_dim"
             android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvPrivacyPolicy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:text="📄  개인정보처리방침 전문 보기"
+            android:textColor="@color/accent2"
+            android:textSize="14sp" />
 
         <TextView
             android:layout_width="match_parent"

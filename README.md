@@ -1,7 +1,7 @@
 # 끝말잇기 (WordChain)
 
 > **Made by LYM** · 문의 dydals5678@gmail.com
-> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.3.10 (빌드 11)**
+> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.3.11 (빌드 12)**
 
 AI와 1:1로 대결하는 한국어 끝말잇기 안드로이드 게임. 채팅하듯 말풍선으로 주고받는 UI에,
 표준국어대사전+끄투 DB 기반 **43만 단어 사전**과 **뜻풀이 43만 건**을 완전 오프라인으로 내장했다.
@@ -116,7 +116,7 @@ gradlew.bat :app:assembleDebug
 # → app/build/outputs/apk/debug/app-debug.apk
 ```
 
-단위 테스트 110개:
+단위 테스트 113개:
 
 ```bash
 gradlew.bat :app:testDebugUnitTest
@@ -138,6 +138,81 @@ java -Dstdout.encoding=UTF-8 tools/BalanceSim.java
 - AGP 9.2.1 (built-in Kotlin) / Gradle 9.4.1 / compileSdk 36 / minSdk 26 / Java 11
 - 외부 라이브러리는 AndroidX + Material Components + JUnit(테스트 전용)뿐.
   **네트워크 권한 없음(완전 오프라인)** — 사전·뜻풀이·그래픽·음원이 전부 APK에 번들돼 있다.
+
+## 이어서 작업하기 전에 — 건드리면 조용히 터지는 것들
+
+전부 **화면이나 빌드에서는 멀쩡해 보이는데 나중에 터지는** 것들이다.
+각 항목의 마지막 줄이 그걸 막고 있는 테스트다.
+
+### 앱 밖으로 나가는 링크는 `legal` 저장소만 가리킨다
+
+`AboutActivity` 의 `DOCS` / `PRIVACY` / `SUPPORT` 는 전부
+`yongminlee2.github.io/legal/wordchain/` 을 본다. **이 저장소(remarkGame)를 가리키면 안 된다** —
+언제든 private 으로 돌릴 수 있고, 그 순간 링크가 404 가 된다.
+개인정보처리방침 링크가 죽은 앱은 스토어에서 내려갈 수 있다.
+
+`docs/PRIVACY.md` 는 **보관용 사본**이다. 방침 문구를 고칠 일이 생기면
+[legal 저장소](https://github.com/Yongminlee2/legal) 쪽을 고쳐야 실제로 반영된다.
+→ `AboutLinksTest`
+
+### 새 화면(Activity)을 만들면 `applySystemBarInsets()` 를 부를 것
+
+targetSdk 35+ 는 edge-to-edge 를 강제해서, 이걸 안 부르면 화면 맨 위가 상태바에,
+**맨 아래 버튼이 내비게이션 바에 가린다.** 안드로이드 14 이하에서는 멀쩡해 보이므로
+구형 폰으로만 확인하면 못 잡는다. 입력창이 있는 화면은 `includeIme = true`
+(안 그러면 키보드가 입력칸을 덮는다 — edge-to-edge 에서는 `adjustResize` 가 안 먹는다).
+→ 자동 검증 없음. 실기기로 확인할 것.
+
+### 아바타 PNG 는 이름으로 찾는다 — 정적 분석은 "미사용"이라고 한다
+
+`AvatarView` 가 `"${color.id}_body_${shape.id}"` 를 만들어 `resources.getIdentifier` 로 연다.
+코드에 `R.drawable.xxx` 가 없으니 안 쓰는 파일처럼 보이지만, 지우면 **릴리스에서 조용히
+아바타가 사라진다.** 리소스 축소(`shrinkResources`)를 꺼 둔 이유도 이것이다.
+지우기 전에 `AvatarCatalog` 의 id 조합을 먼저 확인할 것.
+
+### 사전 3종 파일은 서로를 전제한다
+
+`dict_all.txt` · `means.bin` · `means.idx` 는 *i*번째 단어의 뜻이
+`means.bin[idx[i]..idx[i+1]]` 이라는 약속으로 묶여 있다. 하나만 다시 만들면
+**모든 단어가 엉뚱한 뜻을 달게 되는데**, 화면에서는 그냥 "이상한 뜻"으로 보인다.
+`dict_all.txt` 는 `LC_ALL=C` 정렬이어야 한다.
+→ `MeansAssetTest`
+
+### 네트워크 권한을 넣는 순간 스토어 신고가 전부 달라진다
+
+지금 권한은 `RECORD_AUDIO` · `VIBRATE` 둘뿐이고 **`INTERNET` 이 없다.**
+데이터 보안 신고("수집·공유 안 함")도, 개인정보처리방침도 그 전제 위에 쓰여 있다.
+광고나 분석 SDK 를 넣으면 셋 다 다시 써야 한다 —
+체크리스트는 `docs/store/STORE_LISTING.md` 의 "나중에 광고를 넣을 때" 절에 있다.
+
+### 밸런스 숫자는 테스트가 값을 고정하고 있다
+
+난이도별 제한시간(60/45/25/15), 스테이지 조건 분포, 한방단어가 풀리는 라운드 —
+바꾸려면 기대값도 같이 고쳐야 한다.
+→ `AiDifficultyTest` · `StageVarietyTest` · `StageTest` · `ProgressTest`
+
+### 서명 — 파일명이 틀리면 조용히 미서명 AAB 가 나온다
+
+`keystore.properties` 의 `storeFile` 이 실제 파일명과 다르면 빌드가 실패하지 않고
+**서명 없이 통과한다.** 실제로 한 번 당했다(템플릿 기본값 `wordchain-release.jks` vs 실제
+`wordchain.jks`). 릴리스를 만들면 지문을 확인할 것:
+
+```bash
+keytool -printcert -jarfile app/build/outputs/bundle/release/app-release.aab
+```
+
+현재 업로드 키 SHA-256 은 `1C:19:01:F9:45:B9:…:B2:37` 로 시작한다.
+`keystore.properties` 와 `*.jks` 는 **절대 커밋하지 않는다**(`.gitignore` 에 있음).
+
+### 플레이에 올리려면 `versionCode` 가 직전보다 커야 한다
+
+`app/build.gradle.kts`. 같은 번호로는 업로드 자체가 거부된다.
+
+### 새 테스트는 "무는지" 확인할 것
+
+통과하는 테스트는 아무것도 증명하지 않는다. **일부러 코드를 되돌려서
+그 테스트가 실패하는 것까지** 본 다음에 커밋한다. 실제로 처음 쓴
+`GameEngineDictTest` 는 버그가 있는 옛 코드에서도 통과했다.
 
 ## 라이선스
 
@@ -196,7 +271,7 @@ app/src/main/java/com/kkeutmal/game/
 ├── AudioManager.kt    # SFX 6종 + BGM 20곡 랜덤 연속 재생
 └── VoiceInput.kt      # SpeechRecognizer 래퍼 (ko-KR, 한글만 추출)
 
-app/src/test/java/com/kkeutmal/game/   # 단위 테스트 110개
+app/src/test/java/com/kkeutmal/game/   # 단위 테스트 113개
 app/src/main/res/drawable-nodpi/       # Kenney CC0 PNG 42장 (몸통24+얼굴14+아이콘4)
 tools/                                 # 데스크톱 검증 하네스 (앱에 포함되지 않음)
 ├── BalanceSim.java     # 레벨·스테이지·경제 곡선 측정
@@ -259,7 +334,7 @@ app/src/main/assets/
 - **밸런스 검증**: 데스크톱 시뮬레이션(무작위 유효단어 플레이어 × 난이도별 150판)으로
   "AI 규칙위반 0건 / 매우쉬움~보통 한방단어 0건"을 확인하고 출시.
 - **화면과 로직 분리**: 난이도 곡선·보스 규칙·아바타 카탈로그·미션·보상 계산을 전부 Android 의존 없는
-  순수 Kotlin으로 뺐다. 덕분에 위험한 부분(레벨 곡선, 두음법칙, 마이그레이션)을 단위 테스트 110개로 잡을 수 있고,
+  순수 Kotlin으로 뺐다. 덕분에 위험한 부분(레벨 곡선, 두음법칙, 마이그레이션)을 단위 테스트 113개로 잡을 수 있고,
   화면은 그 결과를 그리기만 한다.
 - **보스 규칙은 두 곳에 동시 적용**: 플레이어 단어 검증뿐 아니라 **한방단어 판정과 AI 후보 탐색에도**
   같은 규칙을 건다. 한쪽만 걸면 "받침 있는 단어만" 같은 규칙에서 후보가 전멸했을 때
@@ -477,6 +552,36 @@ app/src/main/assets/
 i번째 단어의 뜻이 `means.bin[idx[i]..idx[i+1]]` 이라는 약속으로 이어져 있다. 하나만 다시
 만들고 나머지를 안 맞추면 **모든 단어가 엉뚱한 뜻을 달게 되는데**, 화면에서는 그냥
 "이상한 뜻"으로 보여서 알아채기 어렵다. `MeansAssetTest` 5개로 이 약속을 고정했다.
+
+### v1.3.11 — 방침 문서를 앱 저장소 밖으로 뺐다
+
+출시 뒤 이 저장소를 private 으로 돌릴 생각이었는데, 그러면 **개인정보처리방침 링크가
+404 가 된다**는 것이 문제였다. 방침 링크가 죽은 앱은 스토어에서 내려갈 수 있다.
+소스 공개 여부와 방침 문서의 수명이 한 저장소에 묶여 있던 것이 원인이라,
+문서만 떼어 계속 공개로 둘 [`legal`](https://github.com/Yongminlee2/legal) 저장소로 옮겼다.
+
+- 앱 「정보」 화면의 GitHub 소스 링크를 「앱 소개 · 문서」로 바꾸고,
+  방침·지원 링크 두 줄을 새로 넣었다. 이제 바깥 링크 셋이 모두 legal 을 본다.
+- `AboutLinksTest` — 셋 중 하나라도 `remarkGame` 을 가리키면 실패한다.
+  나중에 "링크 정리"하다 한 곳으로 합치는 것을 막으려는 것이다.
+- `docs/PRIVACY.md` 는 남기되 맨 위에 "보관용 사본, 원본은 legal" 이라고 박았다.
+  방침 파일이 둘이면 엉뚱한 쪽을 고치고 끝냈다고 착각하기 쉽다.
+
+**교훈 — 공개 문서에 적은 사실은 코드와 대조할 것.** legal 로 옮기면서 적어 둔 수치를
+전부 코드로 확인했다(단어 수 429,961, 보스 5스테이지 주기, 두음법칙 단방향,
+권한 2개, 한방단어가 풀리는 라운드). 틀린 건 없었지만, **확인하지 않았다면 그게 틀렸는지도
+몰랐을 것이다.** 앱 설명과 달리 방침은 지키지 못하면 제재로 돌아온다.
+
+**교훈 — "우리 앱 기준으로 맞는 문장"이 읽는 사람에게는 거짓일 수 있다.** 방침에
+"음성을 어디로도 보내지 않습니다" 라고 적어 뒀었다. 우리 앱은 실제로 안 보낸다 —
+인터넷 권한이 없다. 그런데 안드로이드 공식 문서는 `SpeechRecognizer` 가 인식을 위해
+**오디오를 원격 서버로 보낼 수 있다**고 적고 있다. 보내는 주체가 우리 앱이 아닐 뿐이다.
+읽는 사람은 "음성이 절대 기기를 안 떠난다"로 읽는다. 처리 주체가 기기의 음성 인식
+서비스이고 그 부분은 해당 제공자의 방침이 적용된다는 것을 명시하는 쪽으로 고쳤다.
+
+> 데이터 보안 신고는 **"수집·공유 안 함" 그대로**다. 구글이 말하는 "수집" 은
+> *앱에서* 기기 밖으로 전송하는 것이고, 사용자가 마이크 버튼을 눌러 시작한 전달은
+> 사용자 개시 행위 예외에 해당한다. 근거는 `docs/store/STORE_LISTING.md` 에 적어 두었다.
 
 ## 문서
 

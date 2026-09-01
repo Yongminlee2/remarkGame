@@ -22,6 +22,7 @@ class ShopActivity : AppCompatActivity() {
         binding = ActivityShopBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.applySystemBarInsets()
+        binding.adBanner.loadAd(Ads.request())
         binding.btnBack.setOnClickListener { finish() }
         refresh()
     }

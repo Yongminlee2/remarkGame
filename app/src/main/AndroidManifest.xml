@@ -4,6 +4,14 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!--
+      광고 때문에 붙는 권한 둘. 이게 생기면서 이 앱은 더 이상 "완전 오프라인"이 아니다.
+      **데이터 보안 신고와 개인정보처리방침을 함께 고쳐야 한다** — 안 고치면 신고가
+      거짓이 되어 정책 위반으로 앱이 내려갈 수 있다. docs/store/STORE_LISTING.md 참고.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -11,6 +19,12 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.KKeutmal">
+
+        <!-- 값이 없으면 광고 SDK 가 초기화 때 예외를 던져 앱이 켜지자마자 죽는다.
+             실제 값은 app/build.gradle.kts 의 admobAppId* 에 있다. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
 
         <activity
             android:name=".MainActivity"

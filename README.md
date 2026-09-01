@@ -1,7 +1,7 @@
 # 끝말잇기 (WordChain)
 
 > **Made by LYM** · 문의 dydals5678@gmail.com
-> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.3.11 (빌드 12)**
+> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.4.0 (빌드 13)**
 
 AI와 1:1로 대결하는 한국어 끝말잇기 안드로이드 게임. 채팅하듯 말풍선으로 주고받는 UI에,
 표준국어대사전+끄투 DB 기반 **43만 단어 사전**과 **뜻풀이 43만 건**을 완전 오프라인으로 내장했다.
@@ -116,7 +116,7 @@ gradlew.bat :app:assembleDebug
 # → app/build/outputs/apk/debug/app-debug.apk
 ```
 
-단위 테스트 113개:
+단위 테스트 117개:
 
 ```bash
 gradlew.bat :app:testDebugUnitTest
@@ -136,8 +136,10 @@ java -Dstdout.encoding=UTF-8 tools/BalanceSim.java
 ```
 
 - AGP 9.2.1 (built-in Kotlin) / Gradle 9.4.1 / compileSdk 36 / minSdk 26 / Java 11
-- 외부 라이브러리는 AndroidX + Material Components + JUnit(테스트 전용)뿐.
-  **네트워크 권한 없음(완전 오프라인)** — 사전·뜻풀이·그래픽·음원이 전부 APK에 번들돼 있다.
+- 외부 라이브러리: AndroidX + Material Components + Play 인앱 업데이트 +
+  Google Mobile Ads(AdMob) + UMP(동의) + JUnit(테스트 전용).
+- **게임 자체는 여전히 오프라인이다** — 사전·뜻풀이·그래픽·음원이 전부 APK 에 번들돼 있어
+  비행기에서도 그대로 돌아간다. 네트워크는 **광고에만** 쓴다(1.4.0 부터).
 
 ## 이어서 작업하기 전에 — 건드리면 조용히 터지는 것들
 
@@ -178,12 +180,18 @@ targetSdk 35+ 는 edge-to-edge 를 강제해서, 이걸 안 부르면 화면 맨
 `dict_all.txt` 는 `LC_ALL=C` 정렬이어야 한다.
 → `MeansAssetTest`
 
-### 네트워크 권한을 넣는 순간 스토어 신고가 전부 달라진다
+### 광고 관련 — 코드만 고치고 신고를 안 고치면 앱이 내려간다
 
-지금 권한은 `RECORD_AUDIO` · `VIBRATE` 둘뿐이고 **`INTERNET` 이 없다.**
-데이터 보안 신고("수집·공유 안 함")도, 개인정보처리방침도 그 전제 위에 쓰여 있다.
-광고나 분석 SDK 를 넣으면 셋 다 다시 써야 한다 —
-체크리스트는 `docs/store/STORE_LISTING.md` 의 "나중에 광고를 넣을 때" 절에 있다.
+1.4.0 에서 광고가 들어가면서 권한에 `INTERNET` 과 `AD_ID` 가 붙었다. 그러면서
+**데이터 보안 신고가 "수집 안 함" → "수집·공유함" 으로 바뀌어야 했고**, 개인정보처리방침도
+다시 썼다(legal 저장소). 광고 관련 코드를 건드릴 때는 이 셋이 같이 움직이는지 볼 것 —
+콘솔 신고, 방침, 앱 콘텐츠의 「광고 포함」 선언. 답안은
+`docs/store/STORE_LISTING.md` 의 「데이터 보안 양식」 절에 적어 두었다.
+
+**광고 단위 ID 는 `Ads.kt` 한 곳에 있다.** 디버그 빌드는 구글 공개 테스트 단위를 쓴다 —
+**자기 앱의 진짜 광고를 자기가 누르면 부정 클릭으로 AdMob 계정이 정지될 수 있다.**
+앱 ID 는 매니페스트에 들어가야 해서 `app/build.gradle.kts` 의 `admobAppId*` 에 있고,
+**값이 없으면 앱이 켜지자마자 죽는다.**
 
 ### 밸런스 숫자는 테스트가 값을 고정하고 있다
 
@@ -271,7 +279,7 @@ app/src/main/java/com/kkeutmal/game/
 ├── AudioManager.kt    # SFX 6종 + BGM 20곡 랜덤 연속 재생
 └── VoiceInput.kt      # SpeechRecognizer 래퍼 (ko-KR, 한글만 추출)
 
-app/src/test/java/com/kkeutmal/game/   # 단위 테스트 113개
+app/src/test/java/com/kkeutmal/game/   # 단위 테스트 117개
 app/src/main/res/drawable-nodpi/       # Kenney CC0 PNG 42장 (몸통24+얼굴14+아이콘4)
 tools/                                 # 데스크톱 검증 하네스 (앱에 포함되지 않음)
 ├── BalanceSim.java     # 레벨·스테이지·경제 곡선 측정
@@ -334,7 +342,7 @@ app/src/main/assets/
 - **밸런스 검증**: 데스크톱 시뮬레이션(무작위 유효단어 플레이어 × 난이도별 150판)으로
   "AI 규칙위반 0건 / 매우쉬움~보통 한방단어 0건"을 확인하고 출시.
 - **화면과 로직 분리**: 난이도 곡선·보스 규칙·아바타 카탈로그·미션·보상 계산을 전부 Android 의존 없는
-  순수 Kotlin으로 뺐다. 덕분에 위험한 부분(레벨 곡선, 두음법칙, 마이그레이션)을 단위 테스트 113개로 잡을 수 있고,
+  순수 Kotlin으로 뺐다. 덕분에 위험한 부분(레벨 곡선, 두음법칙, 마이그레이션)을 단위 테스트 117개로 잡을 수 있고,
   화면은 그 결과를 그리기만 한다.
 - **보스 규칙은 두 곳에 동시 적용**: 플레이어 단어 검증뿐 아니라 **한방단어 판정과 AI 후보 탐색에도**
   같은 규칙을 건다. 한쪽만 걸면 "받침 있는 단어만" 같은 규칙에서 후보가 전멸했을 때

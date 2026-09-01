@@ -58,6 +58,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.root.applySystemBarInsets()
         paintTitle()
+
+        // 동의 확인 후 광고 SDK 를 시작한다. 여기서 한 번만 부르면 된다.
+        Ads.start(this)
+        binding.adBanner.loadAd(Ads.request())
         Wallet.ensureStarterGrant(this)
 
         WordDict.preload(this) // 미리 로드해서 게임 진입을 빠르게

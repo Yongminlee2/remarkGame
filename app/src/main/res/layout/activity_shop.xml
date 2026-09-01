@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical">
+
+<ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
     android:fillViewport="true"
     android:overScrollMode="never">
 
@@ -91,3 +98,14 @@
             android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>
+
+    <!-- 배너는 스크롤과 함께 밀려 올라가면 안 되므로 ScrollView 밖, 화면 아래에 고정한다.
+         인셋 패딩은 이 바깥 LinearLayout 이 받으므로 배너가 내비게이션 바에 가리지 않는다. -->
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        app:adSize="BANNER" />
+
+</LinearLayout>

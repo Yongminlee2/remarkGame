@@ -69,6 +69,9 @@ class GameActivity : AppCompatActivity() {
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.applySystemBarInsets(includeIme = true)
+        // 첫 번째 받아 오기가 실패했을 수도 있어 게임에 들어올 때 한 번 더 시도한다.
+        // 이미 받아 둔 광고가 있으면 아무 일도 하지 않는다.
+        Ads.loadRewarded(this)
 
         mode = runCatching { GameMode.valueOf(intent.getStringExtra(EXTRA_MODE) ?: "FREE") }
             .getOrDefault(GameMode.FREE)
@@ -521,7 +524,25 @@ class GameActivity : AppCompatActivity() {
                     "부활하면 AI 단어를 다시 뽑아 이어서 할 수 있어요 " +
                         "(보유 ${Wallet.itemCount(this, "item_revive")}개)"
                 )
-                .setPositiveButton("부활") { _, _ -> revive(win, reason) }
+                .setPositiveButton("부활") { _, _ -> revive(win, reason, useItem = true) }
+                .setNegativeButton("포기") { _, _ -> finishGame(win, reason) }
+                .setCancelable(false)
+                .show()
+            return
+        }
+        // 아이템이 없을 때만 광고를 권한다. 아이템이 있는 사람에게 광고부터 들이밀면
+        // 돈 주고 산 아이템이 무색해진다. 광고가 아직 안 받아졌으면 꺼내지 않는다.
+        if (!win && canRevive && Ads.isRewardedReady()) {
+            stopTimer()
+            MaterialAlertDialogBuilder(this)
+                .setTitle("🎬 광고 보고 부활할까요?")
+                .setMessage("짧은 광고를 보면 AI 단어를 다시 뽑아 이어서 할 수 있어요")
+                .setPositiveButton("광고 보기") { _, _ ->
+                    Ads.showRewarded(this) { earned ->
+                        if (earned) revive(win, reason, useItem = false)
+                        else finishGame(win, reason)
+                    }
+                }
                 .setNegativeButton("포기") { _, _ -> finishGame(win, reason) }
                 .setCancelable(false)
                 .show()
@@ -530,8 +551,11 @@ class GameActivity : AppCompatActivity() {
         finishGame(win, reason)
     }
 
-    private fun revive(win: Boolean, reason: String) {
-        Wallet.useItem(this, "item_revive")
+    /**
+     * @param useItem 아이템을 써서 부활하는가. 광고를 보고 부활할 때는 false 다.
+     */
+    private fun revive(win: Boolean, reason: String, useItem: Boolean) {
+        if (useItem) Wallet.useItem(this, "item_revive")
         refreshItemBar()
         adapter.add(ChatItem.Sys("🛡 부활했어요!"))
 
@@ -544,7 +568,8 @@ class GameActivity : AppCompatActivity() {
         scrollToEnd()
 
         // 새 단어로도 이어갈 곳이 없으면 부활이 무의미하다. 아이템만 잃지 않도록
-        // 되돌려 주고 그대로 끝낸다.
+        // 되돌려 주고 그대로 끝낸다. 광고를 보고 온 경우에는 없던 아이템이 하나 생기는데,
+        // 광고를 본 수고가 헛되지 않도록 그대로 둔다.
         val starts = engine.allowedStarts()
         if (starts != null && !engine.hasAnyCandidate(starts)) {
             Wallet.addItem(this, "item_revive", 1)

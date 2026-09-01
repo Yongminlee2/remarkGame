@@ -4,7 +4,9 @@ import android.content.Intent
 import android.graphics.LinearGradient
 import android.graphics.Shader
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.kkeutmal.game.databinding.ActivityMainBinding
@@ -13,6 +15,16 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var level = AiLevel.NORMAL
+
+    /**
+     * 인앱 업데이트 창의 결과를 받는 자리.
+     *
+     * 결과를 따로 볼 것은 없다 — 유연 업데이트라 사용자가 거절해도 게임은 그대로
+     * 돌아가고, 수락하면 내려받기는 뒤에서 알아서 진행된다. 다만 결과를 받을
+     * 창구가 있어야 시스템이 창을 띄워 주므로 등록만 해 둔다.
+     */
+    private val updateLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
 
     /**
      * 제목에 그라데이션을 입힌다.
@@ -111,6 +123,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        // 새 버전 확인. 받아 두고 설치를 미룬 경우도 여기서 다시 권하므로,
+        // 처음 켤 때가 아니라 홈에 들어올 때마다 부른다.
+        AppUpdate.check(this, updateLauncher)
+
         val prefs = getSharedPreferences("kkeutmal", MODE_PRIVATE)
 
         // 출석 보상 — 홈에 들어올 때 하루 한 번만 처리
@@ -139,6 +156,11 @@ class MainActivity : AppCompatActivity() {
             if (bestScore == 0 && bestRound == 0) "아직 기록 없음"
             else "${bestScore}점 · ${bestRound}라운드"
         binding.tvCoins.text = "🪙 ${Wallet.coins(this)} 코인"
+
+        // 한 판도 안 한 사람에게 "0승 0패"를 보여 줄 이유가 없다. 줄째로 감춘다.
+        val record = Wallet.recordText(Wallet.wins(this), Wallet.losses(this))
+        binding.rowRecord.visibility = if (record == null) View.GONE else View.VISIBLE
+        binding.tvRecord.text = record.orEmpty()
 
         // 프로필
         val playerLevel = Wallet.level(this)

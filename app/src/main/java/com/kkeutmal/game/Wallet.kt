@@ -220,6 +220,32 @@ object Wallet {
 
     fun bestStreak(ctx: Context) = p(ctx).getInt("streak_best", 0)
 
+    // ---------- 승패 전적 ----------
+    //
+    // 자유 대전과 모험을 가리지 않고 끝난 판을 모두 센다.
+    // **항복도 패배로 센다** — 스스로 그만둔 것도 못 이긴 것이니, 그래야 기록이 정직하다.
+    // 부활로 이어서 한 판은 아직 안 끝난 판이라 세지 않는다(끝나는 시점에 한 번만 센다).
+
+    fun wins(ctx: Context) = p(ctx).getInt("wins", 0)
+
+    fun losses(ctx: Context) = p(ctx).getInt("losses", 0)
+
+    fun recordResult(ctx: Context, win: Boolean) {
+        val key = if (win) "wins" else "losses"
+        p(ctx).edit().putInt(key, p(ctx).getInt(key, 0) + 1).apply()
+    }
+
+    /**
+     * 화면에 그대로 넣을 전적 문장. 한 판도 안 했으면 null 이라 부르는 쪽에서 감춘다.
+     *
+     * 저장소를 안 타는 순수 함수라 단위 테스트로 묶어 둔다.
+     */
+    fun recordText(wins: Int, losses: Int): String? {
+        val total = wins + losses
+        if (total == 0) return null
+        return "${wins}승 ${losses}패 · 승률 ${wins * 100 / total}%"
+    }
+
     fun playerStats(ctx: Context) = PlayerStats(
         bestRounds = bestRounds(ctx),
         bestStage = bestStage(ctx),

@@ -568,6 +568,10 @@ class GameActivity : AppCompatActivity() {
             vibrate(100, 50, 100, 50, 100)
         }
 
+        // 판이 실제로 끝나는 곳은 여기 하나뿐이다. 부활은 아직 안 끝난 판이라
+        // 여기를 지나지 않으므로, 한 판이 두 번 세어질 일이 없다.
+        Wallet.recordResult(this, win)
+
         val prefs = getSharedPreferences("kkeutmal", MODE_PRIVATE)
         val bestScore = prefs.getInt("best_score", 0)
         val bestRound = prefs.getInt("best_round", 0)

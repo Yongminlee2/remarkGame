@@ -605,7 +605,9 @@ class GameActivity : AppCompatActivity() {
         // 여기를 지나지 않으므로, 한 판이 두 번 세어질 일이 없다.
         val streak = Wallet.recordResult(this, win)
         Wallet.clearGameInProgress(this) // 끝까지 했으니 중단으로 세지 않는다
-        val streakBonus = Progress.streakBonus(streak)
+        // 모험은 스테이지가 정한 난이도가 engine.level 에 그대로 들어 있어,
+        // 쉬운 초반 스테이지를 반복해 코인을 긁는 것도 같은 배율로 막힌다.
+        val streakBonus = Progress.streakBonus(streak, engine.level)
         if (streakBonus > 0) Wallet.addCoins(this, streakBonus)
 
         val prefs = getSharedPreferences("kkeutmal", MODE_PRIVATE)

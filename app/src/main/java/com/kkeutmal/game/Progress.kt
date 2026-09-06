@@ -52,10 +52,25 @@ object Progress {
      *
      * 첫 승에는 주지 않는다 — 한 판 이겼다고 "연승" 이라고 하면 말이 안 되고,
      * 이기면 늘 추가 코인이 나오는 셈이라 보너스가 보너스처럼 느껴지지 않는다.
-     * 2연승부터 10코인씩 늘고 **10연승에서 50코인으로 멈춘다.**
-     * 상한이 없으면 한 번 잘 타는 사람이 코인 경제를 무너뜨린다.
+     * 2연승부터 늘고 **10연승에서 멈춘다.** 상한이 없으면 한 번 잘 타는 사람이
+     * 코인 경제를 무너뜨린다.
+     *
+     * **난이도로 배율을 준다.** 안 그러면 매우쉬움만 골라 연승을 쌓는 것이 가장
+     * 이득이 되어, 어려운 판에 도전할 이유가 사라진다. 모험 모드도 스테이지가 정한
+     * 난이도를 그대로 넘겨받으므로, 쉬운 초반 스테이지를 반복해 긁는 것도 같이 막힌다.
+     *
+     * @param level 그 판의 AI 난이도
      */
-    fun streakBonus(streak: Int): Int = if (streak < 2) 0 else minOf(streak, 10) * 5
+    fun streakBonus(streak: Int, level: AiLevel): Int {
+        if (streak < 2) return 0
+        val base = minOf(streak, 10) * 5
+        return when (level) {
+            AiLevel.VERY_EASY -> base * 2 / 5   // 10연승에 20
+            AiLevel.EASY -> base * 7 / 10       // 10연승에 35
+            AiLevel.NORMAL -> base              // 10연승에 50
+            AiLevel.HARD -> base * 3 / 2        // 10연승에 75
+        }
+    }
 
     fun stageXp(stage: Int, isBoss: Boolean): Int {
         val base = stage * 10 + 50

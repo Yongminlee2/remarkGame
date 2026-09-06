@@ -18,14 +18,11 @@ val hasReleaseKeystore = keystoreProps.getProperty("storeFile")?.let {
  * AdMob 앱 ID. **매니페스트에 없으면 앱이 시작하자마자 죽는다** — 광고 SDK 가
  * 초기화 때 이 값을 찾고, 없으면 예외를 던진다.
  *
- * 지금 값은 구글이 공개한 **테스트용**이다. 실제 앱 ID(`ca-app-pub-6583185616347720~숫자`)를
- * 받으면 여기만 바꾸면 된다. 광고 단위 ID 는 Ads.kt 에 따로 있다.
- *
- * 개발 중에 진짜 광고를 띄우면 안 된다 — 자기 광고를 자기가 누르면 부정 클릭으로
- * 계정이 정지될 수 있다. 그래서 디버그 빌드는 항상 테스트 값을 쓴다.
+ * 앱 ID 는 디버그·릴리스가 같은 값을 쓴다(구글 권장). 개발 중에 진짜 광고가 나가지 않게
+ * 막는 것은 **광고 단위 ID** 쪽이고, 그건 Ads.kt 에서 디버그일 때 테스트 단위로 바꾼다.
+ * 자기 광고를 자기가 누르면 부정 클릭으로 계정이 정지될 수 있다.
  */
-val admobAppIdTest = "ca-app-pub-3940256099942544~3347511713"
-val admobAppIdReal = admobAppIdTest // TODO: 실제 앱 ID 를 받으면 여기를 바꾼다
+val admobAppId = "ca-app-pub-6583185616347720~5049725231"
 
 android {
     namespace = "com.kkeutmal.game"
@@ -37,7 +34,7 @@ android {
         targetSdk = 36
         versionCode = 13
         versionName = "1.4.0"
-        manifestPlaceholders["admobAppId"] = admobAppIdTest
+        manifestPlaceholders["admobAppId"] = admobAppId
     }
 
     signingConfigs {
@@ -57,7 +54,6 @@ android {
             // 코드를 줄여도 이득이 거의 없고, AvatarView 가 resources.getIdentifier 로
             // 드로어블을 이름으로 찾기 때문에 리소스 축소를 켜면 조용히 깨진다.
             isMinifyEnabled = false
-            manifestPlaceholders["admobAppId"] = admobAppIdReal
             signingConfig = if (hasReleaseKeystore) {
                 signingConfigs.getByName("release")
             } else {

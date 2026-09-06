@@ -25,9 +25,10 @@ object Ads {
     private const val TEST_BANNER = "ca-app-pub-3940256099942544/6300978111"
     private const val TEST_REWARDED = "ca-app-pub-3940256099942544/5224354917"
 
-    // TODO: AdMob 에서 만든 실제 광고 단위 ID 로 바꾼다 (ca-app-pub-6583185616347720/숫자).
-    //       바꾸지 않으면 **릴리스에서도 테스트 광고가 나가 수익이 0 원이다.**
-    private const val REAL_BANNER = TEST_BANNER
+    private const val REAL_BANNER = "ca-app-pub-6583185616347720/9706791550"
+
+    // TODO: 보상형 광고 단위를 아직 못 받았다. 이대로 릴리스하면 보상형만
+    //       테스트 광고가 나가 **그 자리 수익이 0 원이다.** 받는 대로 바꿀 것.
     private const val REAL_REWARDED = TEST_REWARDED
 
     val bannerUnitId: String get() = if (BuildConfig.DEBUG) TEST_BANNER else REAL_BANNER

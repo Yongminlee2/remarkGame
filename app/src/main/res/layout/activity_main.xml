@@ -374,11 +374,10 @@
 
     <!-- 배너는 스크롤과 함께 밀려 올라가면 안 되므로 ScrollView 밖, 화면 아래에 고정한다.
          인셋 패딩은 이 바깥 LinearLayout 이 받으므로 배너가 내비게이션 바에 가리지 않는다. -->
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adBanner"
+    <FrameLayout
+        android:id="@+id/adContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        app:adSize="BANNER" />
+        android:layout_gravity="center_horizontal" />
 
 </LinearLayout>

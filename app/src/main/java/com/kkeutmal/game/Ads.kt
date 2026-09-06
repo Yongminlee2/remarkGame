@@ -30,8 +30,21 @@ object Ads {
     const val REAL_BANNER = "ca-app-pub-6583185616347720/9706791550"
     const val REAL_REWARDED = "ca-app-pub-6583185616347720/3124342383"
 
-    val bannerUnitId: String get() = if (BuildConfig.DEBUG) TEST_BANNER else REAL_BANNER
-    private val rewardedUnitId: String get() = if (BuildConfig.DEBUG) TEST_REWARDED else REAL_REWARDED
+    /**
+     * 디버그 빌드에서도 실제 광고 단위를 쓸지.
+     *
+     * 배선이 맞는지 실기기에서 한 번 확인할 때만 잠깐 켠다. 확인이 끝나면 되돌린다.
+     * **켠 채로 개발하면 안 된다** — 자기 앱의 광고를 자기가 보고 누르면 부정 클릭으로
+     * AdMob 계정이 정지될 수 있다.
+     *
+     * 릴리스 빌드는 이 값과 무관하게 **항상 실제 광고 단위**를 쓴다.
+     */
+    private const val USE_REAL_ADS_IN_DEBUG = false
+
+    private val useTestUnits: Boolean get() = BuildConfig.DEBUG && !USE_REAL_ADS_IN_DEBUG
+
+    val bannerUnitId: String get() = if (useTestUnits) TEST_BANNER else REAL_BANNER
+    private val rewardedUnitId: String get() = if (useTestUnits) TEST_REWARDED else REAL_REWARDED
 
     @Volatile
     private var started = false
@@ -71,6 +84,24 @@ object Ads {
     }
 
     fun request(): AdRequest = AdRequest.Builder().build()
+
+    /**
+     * 배너를 만들어 [container] 에 붙인다.
+     *
+     * XML 에 AdView 를 두면 `adUnitId` 속성을 반드시 적어야 하고, 안 적으면
+     * **인플레이트 때 "required XML attribute adUnitId was missing" 으로 죽는다.**
+     * 그렇다고 XML 에 박아 두면 테스트 단위와 실제 단위를 빌드에 따라 바꿀 수 없다.
+     * 그래서 코드에서 만든다.
+     */
+    fun attachBanner(activity: Activity, container: android.view.ViewGroup) {
+        if (container.childCount > 0) return // 화면이 다시 그려져도 배너는 하나만
+        val view = com.google.android.gms.ads.AdView(activity).apply {
+            adUnitId = bannerUnitId
+            setAdSize(com.google.android.gms.ads.AdSize.BANNER)
+        }
+        container.addView(view)
+        view.loadAd(request())
+    }
 
     // ---------- 보상형 ----------
 

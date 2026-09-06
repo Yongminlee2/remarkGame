@@ -282,6 +282,9 @@ class MainActivity : AppCompatActivity() {
                         )
                         trackThickness = dp(4)
                         trackCornerRadius = dp(2)
+                        // Material 1.13 부터 막대 끝에 점이 기본으로 붙는다.
+                        // 진행이 0 인 얇은 막대에서는 얼룩처럼 보여 끈다.
+                        trackStopIndicatorSize = 0
                         setTrackColor(
                             androidx.core.content.ContextCompat.getColor(
                                 this@MainActivity, R.color.chip_bg

@@ -86,7 +86,8 @@
                         app:trackThickness="6dp"
                         app:trackCornerRadius="3dp"
                         app:trackColor="@color/chip_bg"
-                        app:indicatorColor="@color/accent" />
+                        app:indicatorColor="@color/accent"
+                        app:trackStopIndicatorSize="0dp" />
 
                     <TextView
                         android:id="@+id/tvXp"

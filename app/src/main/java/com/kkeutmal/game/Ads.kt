@@ -25,11 +25,10 @@ object Ads {
     private const val TEST_BANNER = "ca-app-pub-3940256099942544/6300978111"
     private const val TEST_REWARDED = "ca-app-pub-3940256099942544/5224354917"
 
-    private const val REAL_BANNER = "ca-app-pub-6583185616347720/9706791550"
-
-    // TODO: 보상형 광고 단위를 아직 못 받았다. 이대로 릴리스하면 보상형만
-    //       테스트 광고가 나가 **그 자리 수익이 0 원이다.** 받는 대로 바꿀 것.
-    private const val REAL_REWARDED = TEST_REWARDED
+    // 릴리스에서 실제로 나가는 단위. 여기에 테스트 값이 남으면 **수익이 조용히 0 원**이
+    // 되므로 AdUnitIdTest 가 막고 있다. 테스트에서 읽으려고 private 을 풀어 두었다.
+    const val REAL_BANNER = "ca-app-pub-6583185616347720/9706791550"
+    const val REAL_REWARDED = "ca-app-pub-6583185616347720/3124342383"
 
     val bannerUnitId: String get() = if (BuildConfig.DEBUG) TEST_BANNER else REAL_BANNER
     private val rewardedUnitId: String get() = if (BuildConfig.DEBUG) TEST_REWARDED else REAL_REWARDED

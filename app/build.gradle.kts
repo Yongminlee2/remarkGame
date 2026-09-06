@@ -32,8 +32,8 @@ android {
         applicationId = "com.kkeutmal.game"
         minSdk = 26
         targetSdk = 36
-        versionCode = 13
-        versionName = "1.4.0"
+        versionCode = 14
+        versionName = "1.4.1"
         manifestPlaceholders["admobAppId"] = admobAppId
     }
 

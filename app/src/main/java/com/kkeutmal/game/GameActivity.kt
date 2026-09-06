@@ -190,6 +190,8 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun startGame() {
+        // 지고 있을 때 앱을 꺼서 패배를 피하는 것을 막는다. 정상적으로 끝나면 finishGame 이 지운다.
+        Wallet.markGameStarted(this)
         // 앞말잇기는 "○로 끝나는 단어" 역방향 색인이 필요하다. 43만 단어를 한 번 훑어야 해서
         // 첫 입력 때 만들면 화면이 잠깐 멈춘다. 사전이 준비된 지금 미리 만들어 둔다.
         if (stageConfig?.chainMode == ChainMode.HEAD) {
@@ -559,11 +561,17 @@ class GameActivity : AppCompatActivity() {
         refreshItemBar()
         adapter.add(ChatItem.Sys("🛡 부활했어요!"))
 
+        // 새 단어는 **끝 글자가 다른 것**으로 뽑는다(rerollAiWord 가 avoid 로 막는다).
+        // 같은 글자 앞에 다시 세워 두면 방금 막힌 자리에 그대로 서는 셈이라 부활한 보람이 없다.
+        // 이어서 beginPlayerTurn 이 제한시간을 처음부터 다시 준다.
         val newWord = engine.rerollAiWord()
         if (newWord != null) {
             adapter.add(ChatItem.Sys("🔄 AI가 단어를 다시 냈어요"))
             adapter.add(ChatItem.Ai(newWord, WordDict.meaning(newWord)))
             audio.play("sfx_ai")
+        } else {
+            // 바꿀 단어를 못 찾은 드문 경우. 아무 말도 없으면 부활이 안 먹은 것처럼 보인다.
+            adapter.add(ChatItem.Sys("바꿀 단어를 찾지 못했어요. 시간을 다시 드릴게요!"))
         }
         scrollToEnd()
 
@@ -595,7 +603,10 @@ class GameActivity : AppCompatActivity() {
 
         // 판이 실제로 끝나는 곳은 여기 하나뿐이다. 부활은 아직 안 끝난 판이라
         // 여기를 지나지 않으므로, 한 판이 두 번 세어질 일이 없다.
-        Wallet.recordResult(this, win)
+        val streak = Wallet.recordResult(this, win)
+        Wallet.clearGameInProgress(this) // 끝까지 했으니 중단으로 세지 않는다
+        val streakBonus = Progress.streakBonus(streak)
+        if (streakBonus > 0) Wallet.addCoins(this, streakBonus)
 
         val prefs = getSharedPreferences("kkeutmal", MODE_PRIVATE)
         val bestScore = prefs.getInt("best_score", 0)

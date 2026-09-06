@@ -47,6 +47,16 @@ object Progress {
 
     fun freeMatchXp(score: Int): Int = score / 5
 
+    /**
+     * 연승 보너스 코인. 이긴 판에만 얹어 준다.
+     *
+     * 첫 승에는 주지 않는다 — 한 판 이겼다고 "연승" 이라고 하면 말이 안 되고,
+     * 이기면 늘 추가 코인이 나오는 셈이라 보너스가 보너스처럼 느껴지지 않는다.
+     * 2연승부터 10코인씩 늘고 **10연승에서 50코인으로 멈춘다.**
+     * 상한이 없으면 한 번 잘 타는 사람이 코인 경제를 무너뜨린다.
+     */
+    fun streakBonus(streak: Int): Int = if (streak < 2) 0 else minOf(streak, 10) * 5
+
     fun stageXp(stage: Int, isBoss: Boolean): Int {
         val base = stage * 10 + 50
         return if (isBoss) base * 3 else base

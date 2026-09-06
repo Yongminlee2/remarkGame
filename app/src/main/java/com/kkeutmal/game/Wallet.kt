@@ -94,6 +94,17 @@ object Wallet {
     private const val STARTER_FLAG = "starter_granted_v3"
 
     /**
+     * 처음에 그냥 주지 않는 아이템.
+     *
+     * 부활을 3개 쥐고 시작하면 초반 몇 판은 져도 지는 게 아니어서 긴장이 없다.
+     * 사거나, 광고를 보거나, 보상으로 얻게 한다.
+     *
+     * **STARTER_FLAG 를 올리면 안 된다** — 올리면 이미 받은 사람에게 전부 다시 지급된다.
+     * 이 제외 목록은 앞으로 새로 시작하는 사람에게만 적용된다.
+     */
+    private val STARTER_EXCLUDED = setOf("item_revive")
+
+    /**
      * 처음 시작하는 플레이어에게 모든 아이템을 종류별로 지급한다.
      * 플래그로 한 번만 실행되며, 이미 갖고 있던 개수에 더한다.
      */
@@ -102,6 +113,7 @@ object Wallet {
         if (prefs.getBoolean(STARTER_FLAG, false)) return
         val editor = prefs.edit()
         for (item in ITEMS) {
+            if (item.id in STARTER_EXCLUDED) continue
             editor.putInt(item.id, itemCount(ctx, item.id) + STARTER_ITEM_COUNT)
         }
         editor.putBoolean(STARTER_FLAG, true).apply()
@@ -230,9 +242,52 @@ object Wallet {
 
     fun losses(ctx: Context) = p(ctx).getInt("losses", 0)
 
-    fun recordResult(ctx: Context, win: Boolean) {
+    /** @return 이 판까지 이어진 연승 수. 졌으면 0. */
+    fun recordResult(ctx: Context, win: Boolean): Int {
         val key = if (win) "wins" else "losses"
-        p(ctx).edit().putInt(key, p(ctx).getInt(key, 0) + 1).apply()
+        val streak = if (win) winStreak(ctx) + 1 else 0
+        p(ctx).edit()
+            .putInt(key, p(ctx).getInt(key, 0) + 1)
+            .putInt("win_streak", streak)
+            .putInt("win_streak_best", maxOf(bestWinStreak(ctx), streak))
+            .apply()
+        return streak
+    }
+
+    fun winStreak(ctx: Context) = p(ctx).getInt("win_streak", 0)
+
+    fun bestWinStreak(ctx: Context) = p(ctx).getInt("win_streak_best", 0)
+
+    /**
+     * 패배 1회를 지운다(상점에서 광고를 보고 쓴다).
+     * @return 지울 패배가 있었는가. 0패인 사람에게는 광고를 보여 주지 않는다.
+     */
+    fun removeOneLoss(ctx: Context): Boolean {
+        val cur = losses(ctx)
+        if (cur <= 0) return false
+        p(ctx).edit().putInt("losses", cur - 1).apply()
+        return true
+    }
+
+    // ---------- 중간에 꺼 버린 판 ----------
+    //
+    // 지고 있을 때 앱을 꺼서 패배를 피하는 것을 막는다. 판을 시작할 때 표시를 남기고
+    // 정상적으로 끝나면 지운다. 표시가 남은 채로 앱이 다시 켜지면 그 판은 진 것으로 센다.
+
+    fun markGameStarted(ctx: Context) {
+        p(ctx).edit().putBoolean("game_in_progress", true).apply()
+    }
+
+    fun clearGameInProgress(ctx: Context) {
+        p(ctx).edit().putBoolean("game_in_progress", false).apply()
+    }
+
+    /** @return 중단된 판을 패배로 처리했는가. 화면에 알려 주려고 돌려준다. */
+    fun settleAbandonedGame(ctx: Context): Boolean {
+        if (!p(ctx).getBoolean("game_in_progress", false)) return false
+        clearGameInProgress(ctx)
+        recordResult(ctx, win = false)
+        return true
     }
 
     /**

@@ -59,6 +59,22 @@ class MainActivity : AppCompatActivity() {
         binding.root.applySystemBarInsets()
         paintTitle()
 
+        // 지난번에 판을 끝내지 않고 앱을 꺼 버렸으면 그 판을 패배로 센다.
+        //
+        // **onResume 이 아니라 onCreate 에 둔다.** 게임에서 돌아올 때는 onResume 만 도는데,
+        // 거기 두면 정상적으로 끝낸 판까지 한 번 더 세게 된다. onCreate 는 앱이 새로
+        // 켜질 때만 돌므로 "꺼 버린 판" 만 걸린다.
+        if (Wallet.settleAbandonedGame(this)) {
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("지난 판이 패배로 기록됐어요")
+                .setMessage(
+                    "게임 중에 앱이 종료돼서 그 판은 진 것으로 처리했어요.\n" +
+                        "항복 버튼으로 끝내면 언제든 깔끔하게 마칠 수 있어요."
+                )
+                .setPositiveButton("확인", null)
+                .show()
+        }
+
         // 동의 확인 후 광고 SDK 를 시작한다. 여기서 한 번만 부르면 된다.
         Ads.start(this)
         Ads.attachBanner(this, binding.adContainer)
@@ -164,7 +180,9 @@ class MainActivity : AppCompatActivity() {
         // 한 판도 안 한 사람에게 "0승 0패"를 보여 줄 이유가 없다. 줄째로 감춘다.
         val record = Wallet.recordText(Wallet.wins(this), Wallet.losses(this))
         binding.rowRecord.visibility = if (record == null) View.GONE else View.VISIBLE
-        binding.tvRecord.text = record.orEmpty()
+        val streak = Wallet.winStreak(this)
+        binding.tvRecord.text =
+            if (record != null && streak >= 2) "$record  🔥${streak}연승" else record.orEmpty()
 
         // 프로필
         val playerLevel = Wallet.level(this)

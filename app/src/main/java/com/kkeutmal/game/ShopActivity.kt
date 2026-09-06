@@ -24,8 +24,19 @@ class ShopActivity : AppCompatActivity() {
         binding.root.applySystemBarInsets()
         Ads.attachBanner(this, binding.adContainer)
         Ads.loadRewarded(this) // 광고로 받기 버튼이 뜨려면 미리 받아 둬야 한다
+
+        // 광고를 본 직후에는 다음 광고를 받아오는 중이라 버튼이 잠깐 꺼진다.
+        // 도착하면 알려 달라고 해 두어야 버튼이 저절로 살아난다.
+        Ads.onRewardedReady = { if (!isFinishing && !isDestroyed) refresh() }
         binding.btnBack.setOnClickListener { finish() }
         refresh()
+    }
+
+    override fun onDestroy() {
+        // Ads 는 앱이 살아 있는 내내 남는다. 이 화면을 잡은 람다를 그대로 두면
+        // 화면이 통째로 새어 나간다.
+        Ads.onRewardedReady = null
+        super.onDestroy()
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -36,9 +47,16 @@ class ShopActivity : AppCompatActivity() {
      * MaterialButton 은 기본 최소 크기와 위아래 inset 이 커서, 한 줄에 두 개를 넣으면
      * 줄이 통째로 부풀고 설명 글자가 밀린다. 그 셋을 눌러 준다.
      */
-    private fun smallButton(label: String, colorRes: Int, onClick: () -> Unit) =
+    private fun smallButton(
+        label: String,
+        colorRes: Int,
+        enabled: Boolean = true,
+        onClick: () -> Unit
+    ) =
         MaterialButton(this).apply {
             text = label
+            isEnabled = enabled
+            alpha = if (enabled) 1f else 0.4f
             textSize = 12f
             cornerRadius = dp(16)
             minWidth = 0
@@ -167,10 +185,14 @@ class ShopActivity : AppCompatActivity() {
             row.addView(mid)
             // 광고로 받기. 광고가 아직 안 받아졌으면 아예 안 보여 준다 —
             // 눌렀는데 아무 일도 안 일어나는 것이 제일 나쁘다.
-            if (Ads.isRewardedReady()) {
-                val n = Wallet.adRewardCount(item.price)
-                row.addView(smallButton("🎬×$n", R.color.accent2_dark) { watchAdFor(item) })
-            }
+            // 버튼을 없앴다 살렸다 하면 광고를 볼 때마다 줄이 출렁이고, 사용자는
+            // "왜 사라졌지?" 하게 된다. 자리는 늘 두고 준비 안 됐을 때만 흐리게 한다.
+            val n = Wallet.adRewardCount(item.price)
+            row.addView(
+                smallButton("🎬+$n", R.color.accent2_dark, Ads.isRewardedReady()) {
+                    watchAdFor(item)
+                }
+            )
             row.addView(smallButton("${item.price}🪙", R.color.accent) { buyItem(item) })
             list.addView(row)
         }
@@ -211,14 +233,14 @@ class ShopActivity : AppCompatActivity() {
         })
         mid.addView(TextView(this).apply {
             text = if (Ads.isRewardedReady()) "광고를 보면 전적에서 패배 1회를 지워요"
-            else "광고를 준비 중이에요. 잠시 뒤 다시 들어와 주세요"
+            else "광고를 준비하고 있어요. 잠시만요"
             textSize = 12f
             setTextColor(ContextCompat.getColor(this@ShopActivity, R.color.text_dim))
         })
         row.addView(mid)
-        if (Ads.isRewardedReady()) {
-            row.addView(smallButton("🎬", R.color.accent2_dark) { watchAdToEraseLoss() })
-        }
+        row.addView(
+            smallButton("🎬", R.color.accent2_dark, Ads.isRewardedReady()) { watchAdToEraseLoss() }
+        )
         list.addView(row)
     }
 

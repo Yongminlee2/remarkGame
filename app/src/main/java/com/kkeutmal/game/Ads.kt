@@ -52,6 +52,17 @@ object Ads {
     private var rewarded: RewardedAd? = null
 
     /**
+     * 보상형 광고가 새로 준비됐을 때 한 번 불린다. 상점이 버튼을 다시 켜는 데 쓴다.
+     *
+     * 광고를 본 직후에는 다음 광고를 **받아오는 중**이라 잠시 준비되지 않은 상태가 된다.
+     * 그때 화면을 그대로 두면 버튼이 영영 꺼진 채로 남는다(나갔다 들어와야 살아난다).
+     *
+     * **화면이 사라질 때 반드시 null 로 지울 것** — 이 객체는 앱이 살아 있는 내내
+     * 남으므로, 액티비티를 잡은 람다를 그대로 두면 화면이 통째로 새어 나간다.
+     */
+    var onRewardedReady: (() -> Unit)? = null
+
+    /**
      * 동의를 확인한 뒤 광고 SDK 를 시작한다. 홈 화면에서 한 번 부르면 된다.
      *
      * EEA(유럽) 사용자에게는 **광고를 띄우기 전에 동의를 받는 것이 법적 의무**다.
@@ -113,6 +124,7 @@ object Ads {
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
                     rewarded = ad
+                    onRewardedReady?.invoke()
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {

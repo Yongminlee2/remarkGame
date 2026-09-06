@@ -142,15 +142,33 @@ Play Console → 프로덕션 → 새 버전 만들기 → 「이 버전의 새�
 
 • 승패 전적이 메인 화면에 표시됩니다. 승·패·승률을 한눈에 볼 수 있어요.
 • 연승 보너스가 생겼습니다. 2연승부터 코인을 더 받고, 어려운 난이도일수록 많이 받아요.
+• 게임 중에 앱을 종료하면 그 판은 패배로 기록됩니다. 그만두실 때는 항복 버튼을 눌러 주세요.
 • 오늘의 미션에 진행 막대가 생겼습니다.
 • 새 버전이 나오면 앱 안에서 바로 받을 수 있습니다.
-• 광고가 추가되었습니다. 졌을 때 광고를 보고 이어서 하거나,
-  상점에서 광고로 아이템을 받을 수 있어요.
+• 광고가 추가되었습니다. 졌을 때 광고를 보고 이어서 하거나, 상점에서 광고로 아이템을 받을 수 있어요.
 
 불편한 점이나 이상한 단어가 있으면 알려주세요.
 ```
 
-약 220자. 한 언어당 **500자**까지 들어간다.
+약 280자. 한 언어당 **500자**까지 들어간다.
+
+> **앱 종료 = 패배를 반드시 적을 것.** 이건 사용자가 화면에서 스스로 알아낼 방법이 없다.
+> 안 적으면 "안 했는데 패배가 늘었다" 는 버그 신고와 별점 한 개로 돌아온다.
+
+영문 등록정보는 구글 자동 번역으로 보인다(기계 번역 티가 난다).
+그렇다면 **한국어만 채우면 나머지는 따라온다.** 콘솔이 다른 언어를 요구하면
+「다른 언어에 복사」로 채우고, 영문은 아래를 쓴다.
+
+```
+What's new
+
+• Your win/loss record now appears on the home screen.
+• Win streak bonus: extra coins from 2 wins in a row, more on higher difficulty.
+• Closing the app mid-game now counts as a loss. Please use the surrender button instead.
+• Daily missions now show a progress bar.
+• You can now update the app from inside the app.
+• Ads have been added. Watch one to continue after losing, or to get items in the shop.
+```
 
 > **광고를 먼저 숨기지 않고 적는다.** 어차피 스토어에 「광고 포함」 라벨이 붙고,
 > 미리 밝히면 "광고 있는 줄 몰랐다" 는 별점 한 개짜리 리뷰를 줄일 수 있다.

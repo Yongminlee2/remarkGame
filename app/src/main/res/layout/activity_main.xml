@@ -360,6 +360,11 @@
             android:textSize="13sp"
             android:text="제한시간 20초" />
 
+        <!--
+          제한시간 없이 노는 스위치. 지금은 감춰 두었다.
+          되살리려면 visibility 를 지우고, MainActivity 에서 저장값을 다시 읽게 하면 된다
+          (지금은 감춘 채로 켜져 있으면 끌 방법이 없어 늘 꺼진 값을 쓴다).
+        -->
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/swNoTimer"
             android:layout_width="wrap_content"
@@ -367,7 +372,8 @@
             android:layout_marginTop="8dp"
             android:text="  ⏱ 제한시간 없이 느긋하게  "
             android:textColor="@color/text_primary"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStart"

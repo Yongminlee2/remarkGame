@@ -85,7 +85,12 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("kkeutmal", MODE_PRIVATE)
         level = runCatching { AiLevel.valueOf(prefs.getString("sel_level", AiLevel.NORMAL.name)!!) }
             .getOrDefault(AiLevel.NORMAL)
-        binding.swNoTimer.isChecked = prefs.getBoolean("sel_notimer", false)
+        // 스위치를 감춰 뒀으므로 저장값을 읽지 않는다. 예전에 켜 둔 사람이 있으면
+        // 끌 방법이 없어 영영 무제한으로 남기 때문에, 저장값도 함께 꺼 준다.
+        binding.swNoTimer.isChecked = false
+        if (prefs.getBoolean("sel_notimer", false)) {
+            prefs.edit().putBoolean("sel_notimer", false).apply()
+        }
 
         binding.toggleDifficulty.check(buttonIdOf(level))
         updateDesc()

@@ -25,6 +25,19 @@ object Wallet {
         Item("item_revive", "🛡", "부활", "게임 오버를 1회 무효로 만들고 이어서 해요", 200)
     )
 
+    /**
+     * 광고 하나를 보고 받는 개수. 값이 싼 아이템일수록 여러 개 준다.
+     *
+     * 개수를 하나로 고정하면 **부활(200코인)을 광고로 받는 것이 시간(60코인)보다
+     * 세 배 이득**이라 아무도 싼 아이템을 광고로 받지 않는다. 광고 한 편의 값어치를
+     * 대략 맞춰 두면 필요한 것을 고르게 된다.
+     */
+    fun adRewardCount(price: Int): Int = when {
+        price <= 60 -> 3
+        price <= 120 -> 2
+        else -> 1
+    }
+
     private fun p(ctx: Context): SharedPreferences =
         ctx.getSharedPreferences("kkeutmal", Context.MODE_PRIVATE)
 
@@ -291,14 +304,14 @@ object Wallet {
     }
 
     /**
-     * 화면에 그대로 넣을 전적 문장. 한 판도 안 했으면 null 이라 부르는 쪽에서 감춘다.
+     * 승률(%). **한 판도 안 했으면 null** — 0으로 나누기를 여기서 막는다.
      *
-     * 저장소를 안 타는 순수 함수라 단위 테스트로 묶어 둔다.
+     * 화면에서 직접 나누면 첫 실행에 앱이 죽는데, 개발자는 이미 몇 판 해 본
+     * 상태라 재현되지 않는다. 저장소를 안 타는 순수 함수라 테스트로 묶어 둔다.
      */
-    fun recordText(wins: Int, losses: Int): String? {
+    fun winRatePercent(wins: Int, losses: Int): Int? {
         val total = wins + losses
-        if (total == 0) return null
-        return "${wins}승 ${losses}패 · 승률 ${wins * 100 / total}%"
+        return if (total <= 0) null else wins * 100 / total
     }
 
     fun playerStats(ctx: Context) = PlayerStats(

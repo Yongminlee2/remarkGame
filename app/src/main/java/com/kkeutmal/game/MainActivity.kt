@@ -119,6 +119,20 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, AboutActivity::class.java))
         }
 
+        // 규칙은 접어 두고 제목을 누르면 펼친다. 처음 한 번만 읽으면 되는 내용이
+        // 늘 펼쳐져 있으면 화면 아래가 텍스트 벽이 된다.
+        fun renderRules() {
+            val open = binding.tvRulesBody.visibility == View.VISIBLE
+            binding.tvRulesTitle.text =
+                getString(R.string.rules_title) + if (open) "   ▲" else "   ▼"
+        }
+        renderRules()
+        binding.tvRulesTitle.setOnClickListener {
+            binding.tvRulesBody.visibility =
+                if (binding.tvRulesBody.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            renderRules()
+        }
+
         binding.btnStart.setOnClickListener {
             startActivity(
                 Intent(this, GameActivity::class.java)
@@ -177,12 +191,20 @@ class MainActivity : AppCompatActivity() {
             else "${bestScore}점 · ${bestRound}라운드"
         binding.tvCoins.text = "🪙 ${Wallet.coins(this)} 코인"
 
-        // 한 판도 안 한 사람에게 "0승 0패"를 보여 줄 이유가 없다. 줄째로 감춘다.
-        val record = Wallet.recordText(Wallet.wins(this), Wallet.losses(this))
-        binding.rowRecord.visibility = if (record == null) View.GONE else View.VISIBLE
-        val streak = Wallet.winStreak(this)
-        binding.tvRecord.text =
-            if (record != null && streak >= 2) "$record  🔥${streak}연승" else record.orEmpty()
+        // 한 판도 안 한 사람에게 "0승 0패" 를 보여 줄 이유가 없다. 줄째로 감춘다.
+        val wins = Wallet.wins(this)
+        val losses = Wallet.losses(this)
+        val played = wins + losses
+        binding.rowRecord.visibility = if (played == 0) View.GONE else View.VISIBLE
+        if (played > 0) {
+            binding.tvWins.text = "$wins"
+            binding.tvLosses.text = "$losses"
+            binding.tvWinRate.text = "${Wallet.winRatePercent(wins, losses) ?: 0}%"
+            // 연승 중이면 승률 자리 아래에 불을 붙인다. 따로 줄을 만들지 않고
+            // 이미 있는 이름표를 바꿔 쓴다 — 화면을 더 늘리지 않으려고.
+            val streak = Wallet.winStreak(this)
+            binding.tvWinRateLabel.text = if (streak >= 2) "🔥 ${streak}연승" else "승률"
+        }
 
         // 프로필
         val playerLevel = Wallet.level(this)
@@ -225,13 +247,16 @@ class MainActivity : AppCompatActivity() {
             textSize = 13f
             setTextColor(androidx.core.content.ContextCompat.getColor(this@MainActivity, R.color.text_dim))
         })
+        val density = resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+
         for (m in missions) {
             val progress = prefs.getInt("mission_progress_${m.id}", 0)
             val done = Missions.isComplete(m, progress)
             binding.missionBox.addView(TextView(this).apply {
                 text = if (done) "✅ ${m.label}" else "・${m.label}  ($progress/${m.target})"
                 textSize = 13f
-                setPadding(0, (6 * resources.displayMetrics.density).toInt(), 0, 0)
+                setPadding(0, dp(8), 0, 0)
                 setTextColor(
                     androidx.core.content.ContextCompat.getColor(
                         this@MainActivity,
@@ -239,6 +264,36 @@ class MainActivity : AppCompatActivity() {
                     )
                 )
             })
+            // 숫자만으로는 얼마나 왔는지 읽어야 안다. 막대를 깔면 한눈에 들어온다.
+            // 끝낸 미션은 이미 ✅ 로 알 수 있으니 막대를 그리지 않는다.
+            if (!done) {
+                binding.missionBox.addView(
+                    com.google.android.material.progressindicator.LinearProgressIndicator(this).apply {
+                        max = 1000
+                        setProgressCompat(
+                            (progress.toLong() * 1000 / m.target.coerceAtLeast(1))
+                                .toInt().coerceIn(0, 1000),
+                            false
+                        )
+                        trackThickness = dp(4)
+                        trackCornerRadius = dp(2)
+                        setTrackColor(
+                            androidx.core.content.ContextCompat.getColor(
+                                this@MainActivity, R.color.chip_bg
+                            )
+                        )
+                        setIndicatorColor(
+                            androidx.core.content.ContextCompat.getColor(
+                                this@MainActivity, R.color.accent2
+                            )
+                        )
+                        layoutParams = android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply { setMargins(dp(2), dp(5), dp(2), 0) }
+                    }
+                )
+            }
         }
     }
 }

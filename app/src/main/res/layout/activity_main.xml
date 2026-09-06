@@ -139,30 +139,86 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
+                <!-- 전적은 한 줄 문장 대신 숫자 세 칸으로 보여 준다.
+                     "0승 4패 · 승률 0%" 는 읽어야 알지만, 큰 숫자는 눈에 바로 들어온다. -->
                 <LinearLayout
                     android:id="@+id/rowRecord"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="14dp"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical"
+                    android:baselineAligned="false"
                     android:visibility="gone">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:text="전적"
-                        android:textColor="@color/text_dim"
-                        android:textSize="14sp" />
+                        android:orientation="vertical"
+                        android:gravity="center_horizontal">
 
-                    <TextView
-                        android:id="@+id/tvRecord"
-                        android:layout_width="wrap_content"
+                        <TextView
+                            android:id="@+id/tvWins"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/accent2"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="승"
+                            android:textColor="@color/text_dim"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/accent2"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical"
+                        android:gravity="center_horizontal">
+
+                        <TextView
+                            android:id="@+id/tvLosses"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="패"
+                            android:textColor="@color/text_dim"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center_horizontal">
+
+                        <TextView
+                            android:id="@+id/tvWinRate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/accent"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvWinRateLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="승률"
+                            android:textColor="@color/text_dim"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <LinearLayout
@@ -340,22 +396,29 @@
                 android:orientation="vertical"
                 android:padding="18dp">
 
+                <!-- 처음 한 번만 읽으면 되는 내용이라 접어 둔다. 늘 펼쳐 두면
+                     매번 화면 아래를 텍스트 벽으로 채운다. -->
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/tvRulesTitle"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
                     android:text="@string/rules_title"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvRulesBody"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:lineSpacingExtra="5dp"
                     android:text="@string/rules_body"
                     android:textColor="@color/text_dim"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

@@ -30,6 +30,32 @@ class ShopActivity : AppCompatActivity() {
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
+    /**
+     * 상점 줄에 들어갈 작은 버튼.
+     *
+     * MaterialButton 은 기본 최소 크기와 위아래 inset 이 커서, 한 줄에 두 개를 넣으면
+     * 줄이 통째로 부풀고 설명 글자가 밀린다. 그 셋을 눌러 준다.
+     */
+    private fun smallButton(label: String, colorRes: Int, onClick: () -> Unit) =
+        MaterialButton(this).apply {
+            text = label
+            textSize = 12f
+            cornerRadius = dp(16)
+            minWidth = 0
+            minimumWidth = 0
+            minHeight = 0
+            minimumHeight = 0
+            insetTop = 0
+            insetBottom = 0
+            setPadding(dp(12), dp(4), dp(12), dp(4))
+            setTextColor(Color.WHITE)
+            backgroundTintList = ContextCompat.getColorStateList(this@ShopActivity, colorRes)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, dp(34)
+            ).apply { setMargins(dp(4), 0, 0, 0) }
+            setOnClickListener { onClick() }
+        }
+
     private fun refresh() {
         binding.tvShopCoins.text = "🪙 ${Wallet.coins(this)}"
         buildAvatars()
@@ -142,28 +168,10 @@ class ShopActivity : AppCompatActivity() {
             // 광고로 받기. 광고가 아직 안 받아졌으면 아예 안 보여 준다 —
             // 눌렀는데 아무 일도 안 일어나는 것이 제일 나쁘다.
             if (Ads.isRewardedReady()) {
-                row.addView(MaterialButton(this).apply {
-                    text = "🎬"
-                    textSize = 13f
-                    cornerRadius = dp(18)
-                    setTextColor(Color.WHITE)
-                    backgroundTintList =
-                        ContextCompat.getColorStateList(this@ShopActivity, R.color.accent2_dark)
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply { setMargins(0, 0, dp(6), 0) }
-                    setOnClickListener { watchAdFor(item) }
-                })
+                val n = Wallet.adRewardCount(item.price)
+                row.addView(smallButton("🎬×$n", R.color.accent2_dark) { watchAdFor(item) })
             }
-            row.addView(MaterialButton(this).apply {
-                text = "${item.price}🪙"
-                textSize = 13f
-                cornerRadius = dp(18)
-                setTextColor(Color.WHITE)
-                backgroundTintList = ContextCompat.getColorStateList(this@ShopActivity, R.color.accent)
-                setOnClickListener { buyItem(item) }
-            })
+            row.addView(smallButton("${item.price}🪙", R.color.accent) { buyItem(item) })
             list.addView(row)
         }
 
@@ -209,15 +217,7 @@ class ShopActivity : AppCompatActivity() {
         })
         row.addView(mid)
         if (Ads.isRewardedReady()) {
-            row.addView(MaterialButton(this).apply {
-                text = "🎬"
-                textSize = 13f
-                cornerRadius = dp(18)
-                setTextColor(Color.WHITE)
-                backgroundTintList =
-                    ContextCompat.getColorStateList(this@ShopActivity, R.color.accent2_dark)
-                setOnClickListener { watchAdToEraseLoss() }
-            })
+            row.addView(smallButton("🎬", R.color.accent2_dark) { watchAdToEraseLoss() })
         }
         list.addView(row)
     }
@@ -226,8 +226,9 @@ class ShopActivity : AppCompatActivity() {
     private fun watchAdFor(item: Wallet.Item) {
         Ads.showRewarded(this) { earned ->
             if (earned) {
-                Wallet.addItem(this, item.id, 1)
-                toast("${item.emoji} ${item.nameLabel} 1개를 받았어요")
+                val n = Wallet.adRewardCount(item.price)
+                Wallet.addItem(this, item.id, n)
+                toast("${item.emoji} ${item.nameLabel} ${n}개를 받았어요")
             }
             refresh()
         }

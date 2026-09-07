@@ -187,9 +187,11 @@ class ShopActivity : AppCompatActivity() {
             // 눌렀는데 아무 일도 안 일어나는 것이 제일 나쁘다.
             // 버튼을 없앴다 살렸다 하면 광고를 볼 때마다 줄이 출렁이고, 사용자는
             // "왜 사라졌지?" 하게 된다. 자리는 늘 두고 준비 안 됐을 때만 흐리게 한다.
+            // "+3" 은 "3이 더해진다" 로 읽히고 **무엇이 3인지가 안 보인다.**
+            // "3개" 라고 단위를 붙이면 받는 개수라는 뜻이 분명해진다.
             val n = Wallet.adRewardCount(item.price)
             row.addView(
-                smallButton("🎬+$n", R.color.accent2_dark, Ads.isRewardedReady()) {
+                smallButton("🎬 ${n}개", R.color.accent2_dark, Ads.isRewardedReady()) {
                     watchAdFor(item)
                 }
             )

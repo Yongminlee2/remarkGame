@@ -108,10 +108,24 @@ object Ads {
         if (container.childCount > 0) return // 화면이 다시 그려져도 배너는 하나만
         val view = com.google.android.gms.ads.AdView(activity).apply {
             adUnitId = bannerUnitId
-            setAdSize(com.google.android.gms.ads.AdSize.BANNER)
+            setAdSize(adaptiveBannerSize(activity))
         }
         container.addView(view)
         view.loadAd(request())
+    }
+
+    /**
+     * 화면 폭에 맞춘 배너 크기.
+     *
+     * `AdSize.BANNER` 는 **320×50 고정**이라 요즘 폰에서는 양옆이 남아 작고 촌스럽게 보인다.
+     * 적응형 배너는 폭을 꽉 채우고 기기에 맞는 높이를 스스로 고른다. 보기에도 낫고,
+     * 지면이 커지는 만큼 **단가도 높게 잡힌다.**
+     */
+    private fun adaptiveBannerSize(activity: Activity): com.google.android.gms.ads.AdSize {
+        val dm = activity.resources.displayMetrics
+        val widthDp = (dm.widthPixels / dm.density).toInt().coerceAtLeast(320)
+        return com.google.android.gms.ads.AdSize
+            .getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, widthDp)
     }
 
     // ---------- 보상형 ----------

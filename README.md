@@ -1,7 +1,7 @@
 # 끝말잇기 (WordChain)
 
 > **Made by LYM** · 문의 dydals5678@gmail.com
-> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.4.1 (빌드 14)**
+> 저장소 <https://github.com/Yongminlee2/remarkGame> · 현재 버전 **1.4.2 (빌드 15)**
 
 AI와 1:1로 대결하는 한국어 끝말잇기 안드로이드 게임. 채팅하듯 말풍선으로 주고받는 UI에,
 표준국어대사전+끄투 DB 기반 **43만 단어 사전**과 **뜻풀이 43만 건**을 완전 오프라인으로 내장했다.

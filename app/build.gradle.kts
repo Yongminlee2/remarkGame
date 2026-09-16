@@ -2,6 +2,9 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    // 친구 대전·랭킹용 Firebase. app/google-services.json 이 있어야 빌드된다.
+    // 그 파일은 깃에 올리지 않는다 — README 「새 컴퓨터에서 시작하기」 참고.
+    alias(libs.plugins.google.services)
 }
 
 // 릴리스 서명 정보는 깃에 올리지 않는 keystore.properties 에서 읽는다.
@@ -82,5 +85,10 @@ dependencies {
     implementation(libs.play.app.update)
     implementation(libs.play.services.ads)
     implementation(libs.user.messaging.platform)
+    implementation(libs.play.review)
+    // 분석(analytics) 모듈은 넣지 않는다. 넣는 순간 데이터 보안 신고가 늘어난다.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.database)
     testImplementation(libs.junit)
 }

@@ -168,6 +168,7 @@ class MainActivity : AppCompatActivity() {
         AppUpdate.check(this, updateLauncher)
 
         val prefs = getSharedPreferences("kkeutmal", MODE_PRIVATE)
+        var shownDialogThisResume = false
 
         // 출석 보상 — 홈에 들어올 때 하루 한 번만 처리
         val todayKey = java.time.LocalDate.now().toString()
@@ -180,6 +181,7 @@ class MainActivity : AppCompatActivity() {
                 .putInt("streak_best", maxOf(prefs.getInt("streak_best", 0), r.days))
                 .apply()
             if (r.reward > 0) {
+                shownDialogThisResume = true
                 Wallet.addCoins(this, r.reward)
                 com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                     .setTitle("🔥 ${r.days}일 연속 출석!")
@@ -227,6 +229,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         renderMissions()
+
+        // 리뷰 창은 출석 보상 창과 겹치지 않을 때만. 창 두 개가 연달아 뜨면
+        // 어느 쪽도 제대로 안 읽힌다. 못 띄운 날은 다음에 홈에 들어올 때 다시 본다.
+        if (!shownDialogThisResume) Review.maybeAsk(this)
     }
 
     private fun renderMissions() {

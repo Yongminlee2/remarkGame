@@ -45,8 +45,11 @@ data class RoomSnap(
             if (!s.exists()) return null
             fun str(k: String) = s.child(k).getValue(String::class.java)
             fun long(k: String) = s.child(k).getValue(Long::class.java) ?: 0L
-            // 단어는 push 키 순서(= 올린 순서)로 온다
-            val moves = s.child("moves").children.mapNotNull { m ->
+            // 서버가 찍은 시각(at) 순서로 놓는다. push 키도 대개 같은 순서지만 폰 시계로 만든 키라
+            // 믿지 않는다 — 순서가 뒤집히면 이미 낸 단어를 다시 검사해 "규칙 위반" 으로 판정한다.
+            val moves = s.child("moves").children
+                .sortedBy { it.child("at").getValue(Long::class.java) ?: Long.MAX_VALUE }
+                .mapNotNull { m ->
                 val by = m.child("by").getValue(String::class.java)
                 val word = m.child("word").getValue(String::class.java)
                 val pass = m.child("pass").getValue(Boolean::class.java) == true

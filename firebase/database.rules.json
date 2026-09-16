@@ -15,8 +15,9 @@
         "createdAt": { ".validate": "newData.isNumber()" },
 
         "guest": {
-          ".write": "auth != null && !data.exists() && newData.val() === auth.uid && data.parent().child('state').val() === 'waiting' && now - data.parent().child('createdAt').val() <= 600000"
+          ".write": "auth != null && !data.exists() && newData.val() === auth.uid && data.parent().child('state').val() === 'waiting' && now - data.parent().child('createdAt').val() <= 600000 && (!data.parent().child('invited').exists() || data.parent().child('invited').val() === auth.uid)"
         },
+        "invited": { ".validate": "newData.isString()" },
         "guestAvatar": {
           ".write": "auth != null && newData.parent().child('guest').val() === auth.uid",
           ".validate": "newData.isString() && newData.val().matches(/^[a-z]+_[a-z]+_[a-z]+$/)"
@@ -59,6 +60,22 @@
             ".validate": "newData.isNumber()"
           }
         }
+      }
+    },
+
+    "queue": {
+      ".read": "auth != null",
+      ".indexOn": ["at"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['avatar', 'at'])",
+        "avatar": { ".validate": "newData.isString() && newData.val().matches(/^[a-z]+_[a-z]+_[a-z]+$/)" },
+        "at": { ".validate": "newData.val() === now" },
+        "room": {
+          ".write": "auth != null && auth.uid !== $uid && !data.exists() && data.parent().child('at').exists() && root.child('rooms').child(newData.val()).child('host').val() === auth.uid && root.child('rooms').child(newData.val()).child('invited').val() === $uid",
+          ".validate": "newData.isString() && newData.val().matches(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/)"
+        },
+        "$other": { ".validate": false }
       }
     },
 

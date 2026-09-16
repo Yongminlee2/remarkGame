@@ -21,7 +21,7 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val items = ArrayList<ChatItem>()
     var playerAvatarId: String = AvatarCatalog.DEFAULT_ID
 
-    /** 왼쪽 말풍선에 붙는 이름표. AI 대전은 "AI", 친구 대전은 "친구". */
+    /** 왼쪽 말풍선에 붙는 이름표. AI 대전은 "AI", 온라인 대전은 "상대". */
     var otherLabel: String = "AI"
 
     fun add(item: ChatItem) {

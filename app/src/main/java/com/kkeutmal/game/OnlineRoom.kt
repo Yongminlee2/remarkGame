@@ -89,19 +89,22 @@ class OnlineRoom(val code: String) {
             avatar: String,
             onCreated: (OnlineRoom) -> Unit,
             onError: (String) -> Unit,
+            invited: String? = null,
             triesLeft: Int = 5
         ) {
             val room = OnlineRoom(OnlineRules.newRoomCode())
-            val data = mapOf(
+            val data = mutableMapOf<String, Any>(
                 "host" to uid,
                 "hostAvatar" to avatar,
                 "state" to "waiting",
                 "createdAt" to ServerValue.TIMESTAMP
             )
+            // 랜덤 매칭 방은 찜한 사람만 들어올 수 있다. 대기열의 코드를 엿본 사람이 끼어들지 못하게.
+            if (invited != null) data["invited"] = invited
             room.ref.setValue(data)
                 .addOnSuccessListener { onCreated(room) }
                 .addOnFailureListener {
-                    if (triesLeft > 1) create(uid, avatar, onCreated, onError, triesLeft - 1)
+                    if (triesLeft > 1) create(uid, avatar, onCreated, onError, invited, triesLeft - 1)
                     else onError("방을 만들지 못했어요. 인터넷 연결을 확인해 주세요")
                 }
         }

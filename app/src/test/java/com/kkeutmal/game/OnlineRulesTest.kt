@@ -10,7 +10,7 @@ import java.io.File
 import kotlin.random.Random
 
 /**
- * 친구 대전·랭킹 규칙.
+ * 온라인 대전·랭킹 규칙.
  *
  * 서버에서 판정하지 않으므로 이 규칙이 틀리면 **두 폰이 서로 이겼다고 우기거나, 랭킹이
  * 조용히 안 올라간다.** 둘 다 화면에서는 "가끔 이상하다" 로만 보여서 재현이 어렵다.
@@ -130,6 +130,44 @@ class OnlineRulesTest {
             assertTrue(rules.contains("length <= 20"))
             assertFalse("$r 문장이 기본값으로 떨어진다", OnlineRules.resultMessage(r, true) == "이겼어요")
             assertFalse("$r 문장이 기본값으로 떨어진다", OnlineRules.resultMessage(r, false) == "졌어요")
+        }
+    }
+
+    // ---------- 랜덤 매칭 ----------
+
+    private fun q(uid: String, at: Long, claimed: Boolean = false) = OnlineRules.QueueEntry(uid, at, claimed)
+
+    @Test
+    fun `대기열에 안 올린 사람은 가장 먼저 온 사람을 찜한다`() {
+        val list = listOf(q("b", 2_000), q("a", 1_000), q("c", 3_000))
+        assertEquals("a", OnlineRules.pickOpponent(list, me = "z", myAt = null, serverNow = 5_000))
+    }
+
+    @Test
+    fun `나 자신·이미 찜당한 칸·오래된 칸은 고르지 않는다`() {
+        val now = 100_000L
+        val list = listOf(
+            q("me", now - 1_000),
+            q("taken", now - 2_000, claimed = true),
+            q("ghost", now - OnlineRules.QUEUE_STALE_MS - 1)
+        )
+        assertNull(OnlineRules.pickOpponent(list, me = "me", myAt = null, serverNow = now))
+        assertEquals("fresh", OnlineRules.pickOpponent(list + q("fresh", now - 3_000), "me", null, now))
+    }
+
+    @Test
+    fun `대기 중인 두 사람은 절대 서로를 동시에 찜하지 않는다`() {
+        // 동시에 서로를 찜하면 방이 두 개 생기고 둘 다 상대가 안 오는 방에서 기다린다
+        val rng = Random(11)
+        repeat(20_000) {
+            val a = q("u" + rng.nextInt(5), rng.nextLong(0, 4))
+            val b = q("v" + rng.nextInt(5), rng.nextLong(0, 4))
+            val both = listOf(a, b)
+            val aPicksB = OnlineRules.pickOpponent(both, a.uid, a.at, serverNow = 10) == b.uid
+            val bPicksA = OnlineRules.pickOpponent(both, b.uid, b.at, serverNow = 10) == a.uid
+            assertTrue("$a / $b 가 서로를 찜한다", !(aPicksB && bPicksA))
+            // 그리고 둘 중 하나는 반드시 찜한다 — 아니면 둘 다 AI 로 빠진다
+            assertTrue("$a / $b 가 서로 기다리기만 한다", aPicksB || bPicksA)
         }
     }
 

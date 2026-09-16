@@ -3,7 +3,7 @@ package com.kkeutmal.game
 import kotlin.random.Random
 
 /**
- * 친구 대전·랭킹 규칙 중 **서버와 화면을 타지 않는 부분**.
+ * 온라인 대전·랭킹 규칙 중 **서버와 화면을 타지 않는 부분**.
  *
  * 이 앱은 서버에서 판정하지 않는다(무료 요금제라 Cloud Functions 가 없다). 그래서 **두 폰이
  * 같은 규칙으로 같은 결론을 내야 한다.** 규칙이 여기저기 흩어져 한쪽 폰만 달라지면 서로
@@ -40,7 +40,7 @@ object OnlineRules {
 
     // ---------- 차례와 시간 ----------
 
-    /** 친구 대전 한 차례 제한시간. 자유 대전 '보통' 과 같다. */
+    /** 온라인 대전 한 차례 제한시간. 자유 대전 '보통' 과 같다. */
     const val TURN_SEC = 25
 
     /**
@@ -112,17 +112,54 @@ object OnlineRules {
 
     /** 결과를 내 쪽에서 본 문장으로. */
     fun resultMessage(reason: String?, iWon: Boolean): String = when (reason) {
-        Reason.TIMEOUT -> if (iWon) "친구가 시간을 넘겼어요" else "시간을 넘겼어요"
-        Reason.LEFT -> if (iWon) "친구가 나갔어요" else "연결이 끊겨 패배했어요"
-        Reason.SURRENDER -> if (iWon) "친구가 항복했어요" else "항복했어요"
+        Reason.TIMEOUT -> if (iWon) "상대가 시간을 넘겼어요" else "시간을 넘겼어요"
+        Reason.LEFT -> if (iWon) "상대가 나갔어요" else "연결이 끊겨 패배했어요"
+        Reason.SURRENDER -> if (iWon) "상대가 항복했어요" else "항복했어요"
         Reason.HANBANG -> if (iWon) "한방단어로 이겼어요" else "한방단어에 당했어요"
-        Reason.INVALID -> if (iWon) "친구가 규칙에 맞지 않는 단어를 냈어요" else "규칙에 맞지 않는 단어라 패배했어요"
+        Reason.INVALID -> if (iWon) "상대가 규칙에 맞지 않는 단어를 냈어요" else "규칙에 맞지 않는 단어라 패배했어요"
         else -> if (iWon) "이겼어요" else "졌어요"
     }
 
+    // ---------- 랜덤 매칭 ----------
+    //
+    // 서버 코드 없이 대기열(queue) 하나로 짝을 짓는다. 기다리는 사람은 대기열에 칸을 올리고,
+    // 뒤에 온 사람이 그 칸에 방 코드를 적어 "찜" 한다. **뒤에 온 쪽만 찜한다** — 둘이 동시에
+    // 서로를 찜해 방이 두 개 생기는 일을 이 순서 하나로 막는다. 같은 칸을 둘이 찜하는 경쟁은
+    // 서버 트랜잭션이 한 명만 이기게 한다.
+
+    /** 이만큼 기다려도 상대가 없으면 AI 와 붙는다. */
+    const val MATCH_WAIT_MS = 20_000L
+
+    /** 기다리는 동안 대기열을 다시 훑는 간격. 동시에 들어와 둘 다 칸만 올린 경우를 푼다. */
+    const val MATCH_RECHECK_MS = 3_000L
+
+    /** 찜한 사람이 이 안에 방에 안 들어오면 방을 지우고 다시 찾는다(그새 나갔다). */
+    const val MATCH_JOIN_TIMEOUT_MS = 10_000L
+
+    /** 이보다 오래된 칸은 꺼진 앱이 남긴 것으로 보고 건너뛴다. [MATCH_WAIT_MS] 보다 넉넉해야 한다. */
+    const val QUEUE_STALE_MS = 40_000L
+
+    /** 대기열에서 한 번에 읽는 칸 수(오래된 순). */
+    const val QUEUE_SCAN = 20
+
+    data class QueueEntry(val uid: String, val at: Long, val claimed: Boolean)
+
+    /**
+     * 찜할 상대를 고른다. 없으면 null — 그러면 내가 칸을 올리고 기다린다.
+     *
+     * @param myAt 내가 대기열에 올린 시각. 아직 안 올렸으면 null(누구든 찜해도 된다).
+     *   올렸으면 **나보다 먼저 온 사람만** 고른다. 시각이 같으면 uid 로 순서를 정한다.
+     */
+    fun pickOpponent(entries: List<QueueEntry>, me: String, myAt: Long?, serverNow: Long): String? =
+        entries
+            .filter { it.uid != me && !it.claimed && serverNow - it.at <= QUEUE_STALE_MS }
+            .filter { myAt == null || it.at < myAt || (it.at == myAt && it.uid < me) }
+            .minWithOrNull(compareBy<QueueEntry>({ it.at }, { it.uid }))
+            ?.uid
+
     // ---------- 랭킹 ----------
     //
-    // 랭킹은 **모험 최고 스테이지**로 매긴다. 친구 대전 결과로 매기면 폰 두 대로 짜고 쳐서
+    // 랭킹은 **모험 최고 스테이지**로 매긴다. 온라인 대전 결과로 매기면 폰 두 대로 짜고 쳐서
     // 1등이 되고, 대전 패배는 광고로 지울 수 있어 의미가 없어진다. 모험은 AI 상대라 짜고 칠
     // 수 없고 한 칸씩만 오르므로, 서버 규칙으로 "오르는 속도" 를 묶을 수 있다.
     //

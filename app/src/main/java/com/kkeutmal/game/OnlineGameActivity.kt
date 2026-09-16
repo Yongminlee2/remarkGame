@@ -17,7 +17,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kkeutmal.game.databinding.ActivityGameBinding
 
 /**
- * 친구 대전 화면. AI 대전 화면의 레이아웃을 그대로 쓰고 아이템·목표 줄만 감춘다.
+ * 온라인 대전 화면. AI 대전 화면의 레이아웃을 그대로 쓰고 아이템·목표 줄만 감춘다.
  *
  * **서버가 판정하지 않는다.** 두 폰이 같은 방을 지켜보다가 [OnlineRules.judge] 로 같은 결론을
  * 내고, 먼저 선언한 쪽이 결과로 남는다(서버 규칙이 결과를 한 번만 받는다). 상대가 낸 단어도
@@ -76,6 +76,7 @@ class OnlineGameActivity : AppCompatActivity() {
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.applySystemBarInsets(includeIme = true)
+        Ads.attachBanner(this, binding.adContainer)
 
         val code = intent.getStringExtra(EXTRA_CODE)
         if (code == null) {
@@ -85,14 +86,14 @@ class OnlineGameActivity : AppCompatActivity() {
         isHost = intent.getBooleanExtra(EXTRA_HOST, false)
         room = OnlineRoom(code)
 
-        // 친구 대전엔 아이템·목표·보스 규칙·점수가 없다
+        // 온라인 대전엔 아이템·목표·보스 규칙·점수가 없다
         listOf(
             binding.btnItemTime, binding.btnItemHint, binding.btnItemPass, binding.btnItemDouble,
             binding.bossBanner, binding.tvGoal, binding.tvScore
         ).forEach { it.visibility = View.GONE }
-        binding.tvDifficulty.text = "친구 대전"
+        binding.tvDifficulty.text = "온라인 대전"
 
-        adapter.otherLabel = "친구"
+        adapter.otherLabel = "상대"
         adapter.playerAvatarId = Wallet.selectedAvatarId(this)
         binding.recycler.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = true }
         binding.recycler.adapter = adapter
@@ -183,7 +184,7 @@ class OnlineGameActivity : AppCompatActivity() {
             val meaning = WordDict.meaning(first)
             adapter.add(ChatItem.Sys("🎯 첫 단어는 「$first」" + if (meaning.isNullOrBlank()) "" else "\n$meaning"))
             adapter.add(
-                ChatItem.Sys(if (s.turn == uid) "내가 먼저 이어요!" else "친구가 먼저 이어요")
+                ChatItem.Sys(if (s.turn == uid) "내가 먼저 이어요!" else "상대가 먼저 이어요")
             )
         }
 
@@ -227,7 +228,7 @@ class OnlineGameActivity : AppCompatActivity() {
             openMyTurn(opponent)
         } else if (s.turn != uid) {
             setInputEnabled(false)
-            binding.tvRequired.text = "친구 차례예요…"
+            binding.tvRequired.text = "상대 차례예요…"
         }
     }
 
@@ -279,7 +280,7 @@ class OnlineGameActivity : AppCompatActivity() {
         if (s.state != "playing" || s.turnAt <= 0L) return
         val now = Online.serverNow()
 
-        // 남은 시간 막대. 내 차례든 친구 차례든 같은 마감을 보여 준다.
+        // 남은 시간 막대. 내 차례든 상대 차례든 같은 마감을 보여 준다.
         val leftMs = (OnlineRules.turnDeadline(s.turnAt) - now).coerceAtLeast(0L)
         val totalMs = OnlineRules.TURN_SEC * 1000L
         binding.timerBar.max = 1000
@@ -332,14 +333,14 @@ class OnlineGameActivity : AppCompatActivity() {
         scrollToEnd()
         binding.tvRequired.text = if (iWon) "승리!" else "패배"
 
-        // 방장은 조금 기다렸다 방을 지운다. 바로 지우면 친구 폰이 결과를 받기 전에 방이 사라진다.
+        // 방장은 조금 기다렸다 방을 지운다. 바로 지우면 상대 폰이 결과를 받기 전에 방이 사라진다.
         if (isHost) handler.postDelayed({ deleteRoomOnce() }, 5_000L)
 
         MaterialAlertDialogBuilder(this)
             .setTitle(if (iWon) "🏆 승리!" else "😢 패배")
             .setMessage(
                 OnlineRules.resultMessage(s.reason, iWon) +
-                    "\n\n친구 대전 전적  ${Wallet.onlineWins(this)}승 ${Wallet.onlineLosses(this)}패"
+                    "\n\n온라인 대전 전적  ${Wallet.onlineWins(this)}승 ${Wallet.onlineLosses(this)}패"
             )
             .setPositiveButton("나가기") { _, _ -> finish() }
             .setCancelable(false)
@@ -359,7 +360,7 @@ class OnlineGameActivity : AppCompatActivity() {
         }
         MaterialAlertDialogBuilder(this)
             .setTitle("그만할까요?")
-            .setMessage("지금 나가면 친구 대전 패배로 기록돼요")
+            .setMessage("지금 나가면 온라인 대전 패배로 기록돼요")
             .setPositiveButton("항복") { _, _ ->
                 val uid = me
                 val opponent = uid?.let { snap?.opponentOf(it) }
@@ -443,7 +444,7 @@ class OnlineGameActivity : AppCompatActivity() {
                 if (isHost && snap?.winner != null) deleteRoomOnce()
             }
             // 결과 없이 판 도중에 나가면 연결을 돌려주는 순간 서버가 "나갔다" 를 적고,
-            // 친구 폰이 10초 뒤 승리를 선언한다. 내 쪽 전적은 여기서 바로 센다.
+            // 상대 폰이 10초 뒤 승리를 선언한다. 내 쪽 전적은 여기서 바로 센다.
             if (!finished && snap?.state == "playing") {
                 Wallet.recordOnlineResult(this, win = false)
                 Wallet.clearOnlineInProgress(this)

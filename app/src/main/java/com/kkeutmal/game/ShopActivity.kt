@@ -203,15 +203,15 @@ class ShopActivity : AppCompatActivity() {
     }
 
     /**
-     * 광고를 보고 패배 1회를 지운다. AI 대전과 친구 대전 두 가지를 따로 보여 준다.
+     * 광고를 보고 패배 1회를 지운다. AI 대전과 온라인 대전 두 가지를 따로 보여 준다.
      *
      * 아이템이 아니라 전적을 직접 건드리는 것이라 아이템 목록과 따로 그린다.
      * 지울 패배가 없는 줄은 감춘다 — 0패인 사람에게 권할 이유가 없다.
-     * 친구 대전 전적은 랭킹과 무관하므로 지워도 순위는 그대로다.
+     * 온라인 대전 전적은 랭킹과 무관하므로 지워도 순위는 그대로다.
      */
     private fun buildLossErasers(list: LinearLayout) {
         addLossEraser(list, "패배 지우기", Wallet.losses(this)) { Wallet.removeOneLoss(this) }
-        addLossEraser(list, "친구 대전 패배 지우기", Wallet.onlineLosses(this)) {
+        addLossEraser(list, "온라인 대전 패배 지우기", Wallet.onlineLosses(this)) {
             Wallet.removeOneOnlineLoss(this)
         }
     }

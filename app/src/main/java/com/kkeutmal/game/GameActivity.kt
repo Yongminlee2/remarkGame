@@ -69,6 +69,7 @@ class GameActivity : AppCompatActivity() {
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.applySystemBarInsets(includeIme = true)
+        Ads.attachBanner(this, binding.adContainer)
         // 첫 번째 받아 오기가 실패했을 수도 있어 게임에 들어올 때 한 번 더 시도한다.
         // 이미 받아 둔 광고가 있으면 아무 일도 하지 않는다.
         Ads.loadRewarded(this)

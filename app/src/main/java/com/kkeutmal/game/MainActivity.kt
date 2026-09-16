@@ -250,35 +250,79 @@ class MainActivity : AppCompatActivity() {
             val editor = prefs.edit()
                 .putString("missions_date", today)
                 .putString("missions_ids", picked.joinToString(",") { it.id })
-            for (m in Mission.entries) editor.putInt("mission_progress_${m.id}", 0)
+            for (m in Mission.entries) {
+                editor.putInt("mission_progress_${m.id}", 0)
+                editor.putBoolean("mission_paid_${m.id}", false)
+            }
             editor.putBoolean("missions_bonus_paid", false).apply()
         }
 
         val ids = prefs.getString("missions_ids", "")!!.split(",").filter { it.isNotEmpty() }
         val missions = ids.mapNotNull { id -> Mission.entries.firstOrNull { it.id == id } }
 
-        binding.missionBox.removeAllViews()
-        binding.missionBox.addView(TextView(this).apply {
-            text = "📋 오늘의 미션"
-            textSize = 13f
-            setTextColor(androidx.core.content.ContextCompat.getColor(this@MainActivity, R.color.text_dim))
-        })
+        // 깬 미션 보상을 여기서 준다. 판이 끝나는 곳이 여럿(AI·온라인·모험)이라
+        // 홈으로 돌아올 때 한 곳에서 몰아 주는 편이 빠뜨리지 않는다.
+        val payout = Missions.payout(
+            missions,
+            progress = { prefs.getInt("mission_progress_${it.id}", 0) },
+            alreadyPaid = { prefs.getBoolean("mission_paid_${it.id}", false) },
+            bonusPaid = prefs.getBoolean("missions_bonus_paid", false)
+        )
+        if (payout.coins > 0) {
+            val editor = prefs.edit()
+            payout.paid.forEach { editor.putBoolean("mission_paid_${it.id}", true) }
+            if (payout.bonus) editor.putBoolean("missions_bonus_paid", true)
+            editor.apply()
+            Wallet.addCoins(this, payout.coins)
+            binding.tvCoins.text = "🪙 ${Wallet.coins(this)} 코인"
+            android.widget.Toast.makeText(
+                this,
+                (if (payout.bonus) "🎉 오늘의 미션 모두 완료! " else "📋 미션 완료! ") + "🪙 +${payout.coins} 코인",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
+
+        val color = { res: Int -> androidx.core.content.ContextCompat.getColor(this, res) }
         val density = resources.displayMetrics.density
         fun dp(v: Int) = (v * density).toInt()
+
+        binding.missionBox.removeAllViews()
+        binding.missionBox.addView(android.widget.LinearLayout(this).apply {
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            addView(TextView(this@MainActivity).apply {
+                text = "📋 오늘의 미션"
+                textSize = 14f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setTextColor(color(R.color.text_primary))
+                layoutParams = android.widget.LinearLayout.LayoutParams(0, -2, 1f)
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = if (prefs.getBoolean("missions_bonus_paid", false)) "🎉 보너스 받음"
+                else "모두 깨면 🪙+${Missions.ALL_CLEAR_BONUS}"
+                textSize = 12f
+                setTextColor(color(R.color.text_dim))
+            })
+        })
 
         for (m in missions) {
             val progress = prefs.getInt("mission_progress_${m.id}", 0)
             val done = Missions.isComplete(m, progress)
-            binding.missionBox.addView(TextView(this).apply {
-                text = if (done) "✅ ${m.label}" else "・${m.label}  ($progress/${m.target})"
-                textSize = 13f
-                setPadding(0, dp(8), 0, 0)
-                setTextColor(
-                    androidx.core.content.ContextCompat.getColor(
-                        this@MainActivity,
-                        if (done) R.color.accent2 else R.color.text_primary
-                    )
-                )
+            binding.missionBox.addView(android.widget.LinearLayout(this).apply {
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(0, dp(10), 0, 0)
+                addView(TextView(this@MainActivity).apply {
+                    text = if (done) "✅ ${m.label}" else "・${m.label}  ($progress/${m.target})"
+                    textSize = 13f
+                    setTextColor(color(if (done) R.color.accent2 else R.color.text_primary))
+                    layoutParams = android.widget.LinearLayout.LayoutParams(0, -2, 1f)
+                })
+                // 무엇을 받는지 보여야 할 맛이 난다
+                addView(TextView(this@MainActivity).apply {
+                    text = if (done) "받음" else "🪙${m.reward}"
+                    textSize = 12f
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
+                    setTextColor(color(if (done) R.color.text_dim else R.color.warn))
+                })
             })
             // 숫자만으로는 얼마나 왔는지 읽어야 안다. 막대를 깔면 한눈에 들어온다.
             // 끝낸 미션은 이미 ✅ 로 알 수 있으니 막대를 그리지 않는다.

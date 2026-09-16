@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">끝말잇기</string>
-    <string name="subtitle">AI와 두뇌 한판 승부</string>
+    <string name="subtitle">AI와도, 사람과도 두뇌 한판 승부</string>
     <string name="best_label">🏆 최고 기록</string>
-    <string name="difficulty_label">난이도</string>
+    <string name="difficulty_label">자유 대전 난이도</string>
     <string name="easy">쉬움</string>
     <string name="normal">보통</string>
     <string name="hard">어려움</string>

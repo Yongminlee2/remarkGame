@@ -31,6 +31,9 @@ enum class Mission(
 
 data class StreakResult(val days: Int, val reward: Int, val isNewDay: Boolean)
 
+/** 지금 줘야 할 미션 보상. [paid] 는 이번에 받음 표시를 할 미션들. */
+data class MissionPayout(val coins: Int, val paid: List<Mission>, val bonus: Boolean)
+
 /** 일일 미션과 연속 출석. 날짜는 yyyy-MM-dd 문자열로 주고받아 테스트 가능하게 한다. */
 object Missions {
     const val ALL_CLEAR_BONUS = 50
@@ -86,6 +89,22 @@ object Missions {
         }
 
     fun isComplete(mission: Mission, progress: Int): Boolean = progress >= mission.target
+
+    /**
+     * 깼는데 아직 안 받은 보상을 계산한다. **받음 표시와 함께 써야 두 번 받지 않는다.**
+     * 셋 다 깨면 [ALL_CLEAR_BONUS] 를 한 번 더 준다.
+     */
+    fun payout(
+        missions: List<Mission>,
+        progress: (Mission) -> Int,
+        alreadyPaid: (Mission) -> Boolean,
+        bonusPaid: Boolean
+    ): MissionPayout {
+        val due = missions.filter { isComplete(it, progress(it)) && !alreadyPaid(it) }
+        val allDone = missions.isNotEmpty() && missions.all { isComplete(it, progress(it)) }
+        val bonus = allDone && !bonusPaid
+        return MissionPayout(due.sumOf { it.reward } + (if (bonus) ALL_CLEAR_BONUS else 0), due, bonus)
+    }
 
     /** 미션 진행도를 올린다. 오늘 뽑히지 않은 미션도 올려 두지만 날이 바뀌면 메인 화면이 초기화한다. */
     fun bump(ctx: Context, mission: Mission, amount: Int) {

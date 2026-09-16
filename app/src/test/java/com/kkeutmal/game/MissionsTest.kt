@@ -22,6 +22,30 @@ class MissionsTest {
     }
 
     @Test
+    fun `깬 미션 보상은 한 번만, 셋 다 깨면 보너스도 한 번만`() {
+        val trio = listOf(Mission.PLAY_3, Mission.VOICE_5, Mission.ITEM_2)
+        val progress = mutableMapOf(Mission.PLAY_3 to 3, Mission.VOICE_5 to 1, Mission.ITEM_2 to 0)
+        val paid = mutableSetOf<Mission>()
+        var bonusPaid = false
+        fun pay(): MissionPayout {
+            val p = Missions.payout(trio, { progress.getValue(it) }, { it in paid }, bonusPaid)
+            paid += p.paid
+            if (p.bonus) bonusPaid = true
+            return p
+        }
+
+        assertEquals(Mission.PLAY_3.reward, pay().coins)
+        assertEquals("같은 미션을 또 주면 안 된다", 0, pay().coins)
+
+        progress[Mission.VOICE_5] = 5
+        progress[Mission.ITEM_2] = 2
+        val last = pay()
+        assertTrue(last.bonus)
+        assertEquals(Mission.VOICE_5.reward + Mission.ITEM_2.reward + Missions.ALL_CLEAR_BONUS, last.coins)
+        assertEquals("보너스도 한 번만", 0, pay().coins)
+    }
+
+    @Test
     fun `온라인 미션은 하루에 하나까지만 뽑힌다`() {
         var day = java.time.LocalDate.parse("2026-01-01")
         var sawOnline = false

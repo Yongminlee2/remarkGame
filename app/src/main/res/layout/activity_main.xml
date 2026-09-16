@@ -396,15 +396,6 @@
                 app:cornerRadius="26dp" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/missionBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:background="@drawable/bg_input"
-            android:padding="14dp" />
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -507,6 +498,18 @@
             android:textColor="@color/cta_text"
             app:backgroundTint="@color/cta_bg"
             app:cornerRadius="31dp" />
+
+        <!-- 오늘의 미션. 게임 버튼들을 한데 모으려고 버튼들 아래로 내렸다. -->
+        <LinearLayout
+            android:id="@+id/missionBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:orientation="vertical"
+            android:background="@drawable/bg_input"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="16dp" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

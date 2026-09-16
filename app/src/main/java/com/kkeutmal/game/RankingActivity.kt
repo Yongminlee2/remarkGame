@@ -57,7 +57,9 @@ class RankingActivity : AppCompatActivity() {
         binding.btnBack.setOnClickListener { finish() }
 
         binding.avatarMe.bind(AvatarCatalog.byIdOrDefault(Wallet.selectedAvatarId(this)))
-        binding.tvMine.text = "${Wallet.bestStage(this)}스테이지"
+        val best = Wallet.bestStage(this)
+        // 1스테이지는 아직 하나도 못 깬 상태다. "1스테이지" 라고 쓰면 깬 것처럼 읽힌다.
+        binding.tvMine.text = if (best < 2) "아직 깬 스테이지가 없어요" else "${best}스테이지"
         binding.btnRemove.setOnClickListener { toggleOpt() }
 
         Online.acquire(
@@ -78,7 +80,7 @@ class RankingActivity : AppCompatActivity() {
         MaterialAlertDialogBuilder(this)
             .setTitle("순위표에 내 기록을 올릴까요?")
             .setMessage(
-                "아바타와 모험 최고 스테이지만 올라가요. 이름이나 연락처는 올라가지 않아요.\n" +
+                "아바타와 스테이지 도전 최고 기록만 올라가요. 이름이나 연락처는 올라가지 않아요.\n" +
                     "올리지 않아도 순위표는 볼 수 있고, 나중에 언제든 바꿀 수 있어요."
             )
             .setPositiveButton("올리기") { _, _ ->

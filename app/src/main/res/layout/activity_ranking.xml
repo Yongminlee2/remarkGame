@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="모험에서 가장 멀리 간 스테이지로 순위를 매겨요"
+            android:text="스테이지 도전에서 가장 멀리 간 스테이지로 순위를 매겨요"
             android:textColor="@color/text_dim"
             android:textSize="13sp" />
 

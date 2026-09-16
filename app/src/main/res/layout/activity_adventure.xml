@@ -33,7 +33,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:text="모험"
+                android:text="스테이지 도전"
                 android:textColor="@color/text_primary"
                 android:textSize="22sp"
                 android:fontFamily="sans-serif-black" />

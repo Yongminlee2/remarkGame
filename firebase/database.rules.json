@@ -45,13 +45,34 @@
         "moves": {
           "$move": {
             ".write": "auth != null && !data.exists() && root.child('rooms').child($code).child('state').val() === 'playing' && root.child('rooms').child($code).child('turn').val() === auth.uid && !root.child('rooms').child($code).child('result').exists()",
-            ".validate": "newData.child('by').val() === auth.uid && newData.child('word').isString() && newData.child('word').val().length >= 2 && newData.child('word').val().length <= 20 && newData.child('at').val() === now"
+            ".validate": "newData.child('by').val() === auth.uid && newData.child('at').val() === now && ((newData.child('word').isString() && newData.child('word').val().length >= 2 && newData.child('word').val().length <= 20) || (newData.child('pass').val() === true && !newData.child('word').exists() && newData.parent().parent().child('used').child(auth.uid).child('pass').val() === true && !data.parent().parent().child('used').child(auth.uid).child('pass').exists()))"
           }
         },
 
         "result": {
           ".write": "auth != null && !data.exists() && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid)",
           ".validate": "(newData.child('winner').val() === newData.parent().child('host').val() || newData.child('winner').val() === newData.parent().child('guest').val()) && newData.child('reason').isString() && newData.child('reason').val().length <= 20 && newData.child('at').val() === now"
+        },
+
+        "extra": {
+          ".write": "auth != null && data.parent().child('turn').val() === auth.uid",
+          ".validate": "newData.val() === 15000 && !data.exists() && newData.parent().child('used').child(auth.uid).child('time').val() === true && !data.parent().child('used').child(auth.uid).child('time').exists()"
+        },
+
+        "used": {
+          "$uid": {
+            "$item": {
+              ".write": "auth != null && auth.uid === $uid && !data.exists() && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid)",
+              ".validate": "newData.val() === true && ($item === 'time' || $item === 'pass')"
+            }
+          }
+        },
+
+        "typing": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid)",
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          }
         },
 
         "gone": {

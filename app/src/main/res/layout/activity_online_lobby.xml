@@ -330,7 +330,7 @@
             android:layout_marginTop="8dp"
             android:gravity="center"
             android:lineSpacingExtra="3dp"
-            android:text="한 차례 25초 · 아이템은 쓸 수 없어요 · 코인은 주지 않아요\n게임 중에 나가거나 연결이 10초 넘게 끊기면 패배예요"
+            android:text="한 차례 25초 · 아이템은 종류마다 한 판에 한 번 · 코인은 주지 않아요\n게임 중에 나가거나 연결이 10초 넘게 끊기면 패배예요"
             android:textColor="@color/text_dim"
             android:textSize="12sp" />
     </LinearLayout>

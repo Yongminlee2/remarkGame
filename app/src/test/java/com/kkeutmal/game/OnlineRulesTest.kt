@@ -133,6 +133,26 @@ class OnlineRulesTest {
         }
     }
 
+    @Test
+    fun `시간 아이템을 쓴 차례는 두 폰 모두 마감을 늦춰 본다`() {
+        val me = "me"
+        val you = "you"
+        val t0 = 1_000_000L
+        val extra = OnlineRules.TIME_ITEM_MS
+        val oldDeadline = OnlineRules.turnDeadline(t0)
+        // 내 차례: 원래 마감이 지났어도 늘린 만큼은 지지 않는다
+        assertEquals(OnlineRules.Claim.None,
+            OnlineRules.judge(me, me, t0, null, false, oldDeadline + 1, extraMs = extra))
+        assertEquals(OnlineRules.Claim.Lose(OnlineRules.Reason.TIMEOUT),
+            OnlineRules.judge(me, me, t0, null, false, oldDeadline + extra, extraMs = extra))
+        // 상대 폰도 같은 값을 보고 늘린 마감 + 여유까지 기다린다
+        assertEquals(OnlineRules.Claim.None,
+            OnlineRules.judge(you, me, t0, null, false, oldDeadline + extra + OnlineRules.TURN_GRACE_MS, extraMs = extra))
+        assertEquals(OnlineRules.Claim.Win(OnlineRules.Reason.TIMEOUT),
+            OnlineRules.judge(you, me, t0, null, false, oldDeadline + extra + OnlineRules.TURN_GRACE_MS + 1, extraMs = extra))
+        assertEquals(OnlineRules.TURN_SEC + 15, OnlineRules.secondsLeft(t0, t0, extra))
+    }
+
     // ---------- 랜덤 매칭 ----------
 
     private fun q(uid: String, at: Long, claimed: Boolean = false) = OnlineRules.QueueEntry(uid, at, claimed)
@@ -243,6 +263,15 @@ class OnlineRulesTest {
         assertTrue(
             "규칙 파일의 대기방 유효시간이 앱과 다르다",
             rules.contains("<= ${OnlineRules.ROOM_TTL_MS}")
+        )
+        assertTrue("규칙 파일의 시간 아이템 값이 앱과 다르다", rules.contains("=== ${OnlineRules.TIME_ITEM_MS}"))
+        assertTrue(
+            "규칙 파일이 받는 아이템 종류가 앱과 다르다",
+            rules.contains("\$item === '${OnlineRules.Item.TIME}' || \$item === '${OnlineRules.Item.PASS}'")
+        )
+        assertTrue(
+            "규칙 파일의 쓰는 중 글자 수 상한이 앱과 다르다",
+            rules.substringAfter("\"typing\"").contains("length <= ${OnlineRules.TYPING_MAX}")
         )
     }
 

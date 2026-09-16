@@ -84,6 +84,7 @@ object Wallet {
         val c = itemCount(ctx, id)
         if (c <= 0) return false
         p(ctx).edit().putInt(id, c - 1).apply()
+        Missions.bump(ctx, Mission.ITEM_2, 1)
         return true
     }
 

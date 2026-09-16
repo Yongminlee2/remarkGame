@@ -5,8 +5,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
 
-/** 방에 올라간 단어 하나. */
-data class OnlineMove(val by: String, val word: String)
+/** 방에 올라간 단어 하나. [pass] 면 단어 없이 차례만 넘긴 것(패스 아이템). */
+data class OnlineMove(val by: String, val word: String, val pass: Boolean = false)
 
 /** 방의 현재 모습. 서버에서 받은 그대로를 옮겨 담기만 한다 — 판정은 [OnlineRules]. */
 data class RoomSnap(
@@ -23,7 +23,13 @@ data class RoomSnap(
     val moves: List<OnlineMove>,
     val winner: String?,
     val reason: String?,
-    val gone: Map<String, Long>
+    val gone: Map<String, Long>,
+    /** 이번 차례에 시간 아이템으로 늘린 시간(없으면 0) */
+    val extra: Long = 0L,
+    /** uid → 이번 판에 쓴 아이템 종류 */
+    val used: Map<String, Set<String>> = emptyMap(),
+    /** uid → 지금 입력창에 쓰고 있는 글자 */
+    val typing: Map<String, String> = emptyMap()
 ) {
     fun opponentOf(uid: String): String? = if (uid == host) guest else host
 
@@ -43,7 +49,13 @@ data class RoomSnap(
             val moves = s.child("moves").children.mapNotNull { m ->
                 val by = m.child("by").getValue(String::class.java)
                 val word = m.child("word").getValue(String::class.java)
-                if (by != null && word != null) OnlineMove(by, word) else null
+                val pass = m.child("pass").getValue(Boolean::class.java) == true
+                when {
+                    by == null -> null
+                    pass -> OnlineMove(by, "", pass = true)
+                    word != null -> OnlineMove(by, word)
+                    else -> null
+                }
             }
             val gone = s.child("gone").children.mapNotNull { g ->
                 val at = g.getValue(Long::class.java)
@@ -63,7 +75,15 @@ data class RoomSnap(
                 moves = moves,
                 winner = s.child("result").child("winner").getValue(String::class.java),
                 reason = s.child("result").child("reason").getValue(String::class.java),
-                gone = gone
+                gone = gone,
+                extra = long("extra"),
+                used = s.child("used").children.mapNotNull { u ->
+                    u.key?.let { k -> k to u.children.mapNotNull { it.key }.toSet() }
+                }.toMap(),
+                typing = s.child("typing").children.mapNotNull { t ->
+                    val text = t.getValue(String::class.java)
+                    if (t.key != null && !text.isNullOrEmpty()) t.key!! to text else null
+                }.toMap()
             )
         }
     }
@@ -193,9 +213,40 @@ class OnlineRoom(val code: String) {
             mapOf(
                 "moves/$key" to mapOf("by" to uid, "word" to word, "at" to ServerValue.TIMESTAMP),
                 "turn" to opponentUid,
-                "turnAt" to ServerValue.TIMESTAMP
+                "turnAt" to ServerValue.TIMESTAMP,
+                // 늘린 시간은 그 차례에만 — 차례를 넘기며 같이 지운다
+                "extra" to null,
+                "typing/$uid" to null
             )
         ).addOnFailureListener { onError("보내지 못했어요. 인터넷 연결을 확인해 주세요") }
+    }
+
+    /** 시간 아이템. "썼다" 표시와 늘린 시간을 한 번에 적어야 서버가 한 판에 한 번을 지킬 수 있다. */
+    fun useTime(uid: String, onDone: (ok: Boolean) -> Unit) {
+        ref.updateChildren(
+            mapOf("used/$uid/${OnlineRules.Item.TIME}" to true, "extra" to OnlineRules.TIME_ITEM_MS)
+        ).addOnCompleteListener { onDone(it.isSuccessful) }
+    }
+
+    /** 패스 아이템. 단어 없이 차례를 넘긴다 — 상대가 자기 단어 끝 글자로 다시 이어야 한다. */
+    fun pass(uid: String, opponentUid: String, onDone: (ok: Boolean) -> Unit) {
+        val key = ref.child("moves").push().key ?: return onDone(false)
+        ref.updateChildren(
+            mapOf(
+                "moves/$key" to mapOf("by" to uid, "pass" to true, "at" to ServerValue.TIMESTAMP),
+                "used/$uid/${OnlineRules.Item.PASS}" to true,
+                "turn" to opponentUid,
+                "turnAt" to ServerValue.TIMESTAMP,
+                "extra" to null,
+                "typing/$uid" to null
+            )
+        ).addOnCompleteListener { onDone(it.isSuccessful) }
+    }
+
+    /** 입력창에 쓰는 중인 글자를 상대에게 보여 준다. 빈 글자는 지운다. */
+    fun setTyping(uid: String, text: String) {
+        val t = text.take(OnlineRules.TYPING_MAX)
+        ref.child("typing").child(uid).setValue(t.ifEmpty { null })
     }
 
     /**

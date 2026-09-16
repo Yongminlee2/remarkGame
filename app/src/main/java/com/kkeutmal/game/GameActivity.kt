@@ -639,12 +639,9 @@ class GameActivity : AppCompatActivity() {
             RankingActivity.syncInBackground(this)
         }
 
-        fun bump(m: Mission, amount: Int) {
-            if (amount <= 0) return
-            val key = "mission_progress_${m.id}"
-            prefs.edit().putInt(key, Missions.applyProgress(m, prefs.getInt(key, 0), amount)).apply()
-        }
+        fun bump(m: Mission, amount: Int) = Missions.bump(this, m, amount)
         bump(Mission.PLAY_3, 1)
+        if (win) bump(Mission.STREAK_3, streak)
         bump(Mission.ROUNDS_5, engine.round)
         bump(Mission.LONG_WORD_3, longWordCount)
         bump(Mission.VOICE_5, voiceWordCount)

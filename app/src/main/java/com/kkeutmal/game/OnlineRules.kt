@@ -53,15 +53,38 @@ object OnlineRules {
     /** 연결이 끊긴 뒤 패배로 치기까지 기다리는 시간. 지하철 같은 잠깐 끊김은 봐준다. */
     const val DISCONNECT_GRACE_MS = 10_000L
 
-    fun turnDeadline(turnAt: Long): Long = turnAt + TURN_SEC * 1000L
+    /**
+     * @param extraMs 이번 차례에 시간 아이템으로 늘린 시간. 방의 `extra` 칸 값이고,
+     *   차례가 넘어가면 서버에서 지워져 0 이 된다. 두 폰이 같은 값을 보고 같은 마감을 낸다.
+     */
+    fun turnDeadline(turnAt: Long, extraMs: Long = 0L): Long = turnAt + TURN_SEC * 1000L + extraMs
 
     /** 화면에 보여 줄 남은 초. */
-    fun secondsLeft(turnAt: Long, serverNow: Long): Int =
-        ((turnDeadline(turnAt) - serverNow + 999) / 1000).toInt().coerceIn(0, TURN_SEC)
+    fun secondsLeft(turnAt: Long, serverNow: Long, extraMs: Long = 0L): Int =
+        ((turnDeadline(turnAt, extraMs) - serverNow + 999) / 1000).toInt()
+            .coerceIn(0, TURN_SEC + (extraMs / 1000).toInt())
 
     /** 상대 차례가 여유까지 다 넘겼는가. 넘겼으면 내가 이겼다고 선언해도 된다. */
-    fun opponentTimedOut(turnAt: Long, serverNow: Long): Boolean =
-        serverNow > turnDeadline(turnAt) + TURN_GRACE_MS
+    fun opponentTimedOut(turnAt: Long, serverNow: Long, extraMs: Long = 0L): Boolean =
+        serverNow > turnDeadline(turnAt, extraMs) + TURN_GRACE_MS
+
+    // ---------- 아이템 ----------
+    //
+    // 온라인에서는 **종류마다 한 판에 한 번**. 서버 규칙이 `used/내uid/종류` 를 한 번만 받아서,
+    // 조작한 앱도 두 번은 못 쓴다(아이템 개수 자체는 폰에만 있어 서버가 모른다).
+    // 부활은 판을 되돌리는 것이라 상대가 있는 대전에 안 맞고, 2배는 온라인에 보상이 없어 뺐다.
+    // 힌트는 내 폰에서만 보는 것이라 서버에 적지 않는다(한 번 제한도 폰에서).
+
+    object Item {
+        const val TIME = "time"
+        const val PASS = "pass"
+    }
+
+    /** 시간 아이템이 늘려 주는 시간. 규칙 파일의 `=== 15000` 과 짝이다. */
+    const val TIME_ITEM_MS = 15_000L
+
+    /** 상대에게 보여 주는 "쓰는 중" 글자 수 상한. 단어 최대 길이와 같다. */
+    const val TYPING_MAX = 20
 
     /** 상대 연결이 끊긴 지 여유보다 오래됐는가. goneSince 가 null 이면 연결돼 있다. */
     fun opponentAbandoned(goneSince: Long?, serverNow: Long): Boolean =
@@ -101,12 +124,13 @@ object OnlineRules {
         turnAt: Long,
         opponentGoneSince: Long?,
         resultDecided: Boolean,
-        serverNow: Long
+        serverNow: Long,
+        extraMs: Long = 0L
     ): Claim {
         if (resultDecided || turn == null || turnAt <= 0L) return Claim.None
         if (opponentAbandoned(opponentGoneSince, serverNow)) return Claim.Win(Reason.LEFT)
-        if (turn == me && serverNow >= turnDeadline(turnAt)) return Claim.Lose(Reason.TIMEOUT)
-        if (turn != me && opponentTimedOut(turnAt, serverNow)) return Claim.Win(Reason.TIMEOUT)
+        if (turn == me && serverNow >= turnDeadline(turnAt, extraMs)) return Claim.Lose(Reason.TIMEOUT)
+        if (turn != me && opponentTimedOut(turnAt, serverNow, extraMs)) return Claim.Win(Reason.TIMEOUT)
         return Claim.None
     }
 

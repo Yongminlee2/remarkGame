@@ -206,20 +206,17 @@ class MainActivity : AppCompatActivity() {
             else "${bestScore}점 · ${bestRound}라운드"
         binding.tvCoins.text = "🪙 ${Wallet.coins(this)} 코인"
 
-        // 한 판도 안 한 사람에게 "0승 0패" 를 보여 줄 이유가 없다. 줄째로 감춘다.
         val wins = Wallet.wins(this)
         val losses = Wallet.losses(this)
-        val played = wins + losses
-        binding.rowRecord.visibility = if (played == 0) View.GONE else View.VISIBLE
-        if (played > 0) {
-            binding.tvWins.text = "$wins"
-            binding.tvLosses.text = "$losses"
-            binding.tvWinRate.text = "${Wallet.winRatePercent(wins, losses) ?: 0}%"
-            // 연승 중이면 승률 자리 아래에 불을 붙인다. 따로 줄을 만들지 않고
-            // 이미 있는 이름표를 바꿔 쓴다 — 화면을 더 늘리지 않으려고.
-            val streak = Wallet.winStreak(this)
-            binding.tvWinRateLabel.text = if (streak >= 2) "🔥 ${streak}연승" else "승률"
-        }
+        binding.tvWins.text = "$wins"
+        binding.tvLosses.text = "$losses"
+        // 한 판도 안 했으면 0% 가 아니라 "-" — 진 적이 없는데 0% 로 보이면 억울하다
+        binding.tvWinRate.text = Wallet.winRatePercent(wins, losses)?.let { "$it%" } ?: "-"
+        val streak = Wallet.winStreak(this)
+        binding.tvStreak.visibility = if (streak >= 2) View.VISIBLE else View.GONE
+        binding.tvStreak.text = "🔥 ${streak}연승 중"
+        binding.tvOnlineWins.text = "${Wallet.onlineWins(this)}승"
+        binding.tvOnlineLosses.text = "${Wallet.onlineLosses(this)}패"
 
         // 프로필
         val playerLevel = Wallet.level(this)

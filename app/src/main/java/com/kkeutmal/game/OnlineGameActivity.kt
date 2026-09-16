@@ -6,6 +6,8 @@ import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.EditorInfo
@@ -39,6 +41,9 @@ class OnlineGameActivity : AppCompatActivity() {
          * 돌아 차례가 넘어가기 전에 "시간 초과" 를 스스로 선언하면 억울한 패배가 된다.
          */
         private const val SUBMIT_GRACE_MS = 3_000L
+
+        /** 쓰는 중인 글자를 보내는 간격. 글자마다 보내면 서버 쓰기가 불필요하게 많아진다. */
+        private const val TYPING_SEND_MS = 300L
     }
 
     private lateinit var binding: ActivityGameBinding
@@ -64,6 +69,29 @@ class OnlineGameActivity : AppCompatActivity() {
     /** 상대 단어가 규칙에 안 맞아 이미 이겼다고 선언했다. 결과가 올 때까지 내 차례를 열지 않는다. */
     private var claimedWin = false
 
+    /** 음성으로 낸 단어 수(미션용) */
+    private var voiceWordCount = 0
+
+    /** 힌트는 서버에 안 적으므로 한 판에 한 번을 여기서 센다 */
+    private var hintUsed = false
+    /** 아이템 요청이 서버를 도는 중(두 번 눌러 두 개가 빠지지 않게) */
+    private var itemBusy = false
+    private var activeHint: String? = null
+    private var lastSentTyping = ""
+    private val hideErrorRunnable = Runnable {
+        val hint = activeHint
+        if (hint != null) showHint(hint) else binding.tvError.visibility = View.GONE
+    }
+    private val sendTyping = Runnable {
+        val uid = me ?: return@Runnable
+        // 음성 입력은 글자를 넣자마자 제출한다 — 제출 뒤에 늦게 도착한 "쓰는 중" 을 다시 적지 않게
+        if (finished || !binding.etWord.isEnabled || snap?.turn != uid) return@Runnable
+        val text = binding.etWord.text?.toString().orEmpty()
+        if (text == lastSentTyping) return@Runnable
+        lastSentTyping = text
+        room.setTyping(uid, text)
+    }
+
     private val tick = object : Runnable {
         override fun run() {
             onTick()
@@ -86,11 +114,13 @@ class OnlineGameActivity : AppCompatActivity() {
         isHost = intent.getBooleanExtra(EXTRA_HOST, false)
         room = OnlineRoom(code)
 
-        // 온라인 대전엔 아이템·목표·보스 규칙·점수가 없다
-        listOf(
-            binding.btnItemTime, binding.btnItemHint, binding.btnItemPass, binding.btnItemDouble,
-            binding.bossBanner, binding.tvGoal, binding.tvScore
-        ).forEach { it.visibility = View.GONE }
+        // 온라인 대전엔 목표·보스 규칙·점수가 없다. 아이템은 시간·힌트·패스만(2배는 보상이 없어 뺐다).
+        listOf(binding.btnItemDouble, binding.bossBanner, binding.tvGoal, binding.tvScore)
+            .forEach { it.visibility = View.GONE }
+        binding.btnItemTime.setOnClickListener { useTimeItem() }
+        binding.btnItemHint.setOnClickListener { useHintItem() }
+        binding.btnItemPass.setOnClickListener { usePassItem() }
+        refreshItemBar()
         binding.tvDifficulty.text = "온라인 대전"
 
         adapter.otherLabel = "상대"
@@ -110,6 +140,7 @@ class OnlineGameActivity : AppCompatActivity() {
             binding.etWord.hint = if (on) "듣는 중… 말씀하세요!" else getString(R.string.input_hint)
         }
         voice.onResult = { word ->
+            voiceWordCount++
             binding.etWord.setText(word)
             binding.etWord.setSelection(word.length)
             submit()
@@ -125,6 +156,15 @@ class OnlineGameActivity : AppCompatActivity() {
         }
 
         binding.btnSend.setOnClickListener { submit() }
+        binding.etWord.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                if (!binding.etWord.isEnabled) return
+                handler.removeCallbacks(sendTyping)
+                handler.postDelayed(sendTyping, TYPING_SEND_MS)
+            }
+        })
         binding.etWord.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_SEND) {
                 submit(); true
@@ -135,7 +175,7 @@ class OnlineGameActivity : AppCompatActivity() {
 
         setInputEnabled(false)
         binding.tvRequired.text = "연결하는 중…"
-        binding.tvRound.text = "0라운드"
+        binding.tvRound.text = "라운드 1"
         binding.loadingOverlay.visibility = View.VISIBLE
 
         // 앱이 통째로 꺼지면 다음에 켤 때 패배로 센다(화면을 정상적으로 나가면 그 자리에서 센다)
@@ -188,10 +228,17 @@ class OnlineGameActivity : AppCompatActivity() {
             )
         }
 
+        val appliedBefore = applied
         while (applied < s.moves.size) {
             val m = s.moves[applied]
             applied++
-            if (m.by == uid) {
+            if (m.pass) {
+                // 패스는 단어가 없다. 마지막 단어가 그대로라 상대는 자기 단어 끝 글자로 다시 잇는다.
+                adapter.add(
+                    ChatItem.Sys(if (m.by == uid) "🔄 패스했어요" else "🔄 상대가 패스했어요! 다시 이어 주세요")
+                )
+                audio.play("sfx_ai")
+            } else if (m.by == uid) {
                 engine.applyWord(m.word)
                 adapter.add(ChatItem.Player(m.word, 0, WordDict.meaning(m.word)))
                 audio.play("sfx_ok")
@@ -214,8 +261,10 @@ class OnlineGameActivity : AppCompatActivity() {
                 }
             }
         }
-        binding.tvRound.text = "${s.moves.size}라운드"
-        scrollToEnd()
+        // 두 사람이 한 번씩 이으면 한 라운드
+        binding.tvRound.text = "라운드 ${s.moves.size / 2 + 1}"
+        if (applied != appliedBefore || appliedBefore == 0) scrollToEnd()
+        refreshItemBar()
 
         if (s.winner != null) {
             finishWithResult(s)
@@ -228,8 +277,113 @@ class OnlineGameActivity : AppCompatActivity() {
             openMyTurn(opponent)
         } else if (s.turn != uid) {
             setInputEnabled(false)
-            binding.tvRequired.text = "상대 차례예요…"
+            clearHint()
+            val typing = opponent?.let { s.typing[it] }
+            if (typing.isNullOrEmpty()) {
+                binding.tvRequired.text = "상대 차례예요…"
+            } else {
+                binding.tvRequired.text = "✏️ 상대가 쓰는 중: $typing"
+                binding.tvRequired.alpha = 1f
+            }
         }
+    }
+
+    // ---------- 아이템 ----------
+
+    private fun myUsed(): Set<String> = me?.let { snap?.used?.get(it) }.orEmpty()
+
+    private fun refreshItemBar() {
+        val used = myUsed()
+        fun show(btn: android.widget.TextView, id: String, emoji: String, spent: Boolean) {
+            btn.text = "$emoji×${Wallet.itemCount(this, id)}"
+            btn.alpha = if (spent) 0.35f else 1f
+        }
+        show(binding.btnItemTime, "item_time", "⏰", OnlineRules.Item.TIME in used)
+        show(binding.btnItemHint, "item_hint", "💡", hintUsed)
+        show(binding.btnItemPass, "item_pass", "🔄", OnlineRules.Item.PASS in used)
+    }
+
+    /** 아이템을 써도 되는 때인가. 안 되면 까닭을 보여 주고 false. */
+    private fun canUseItem(id: String, emoji: String, spent: Boolean): Boolean {
+        if (finished || itemBusy || !binding.etWord.isEnabled || snap?.turn != me) return false
+        if (spent) {
+            showError("$emoji 온라인 대전에서는 한 판에 한 번만 쓸 수 있어요")
+            return false
+        }
+        if (Wallet.itemCount(this, id) <= 0) {
+            showError("$emoji 아이템이 없어요. 상점에서 구할 수 있어요")
+            return false
+        }
+        return true
+    }
+
+    private fun useTimeItem() {
+        val uid = me ?: return
+        if (!canUseItem("item_time", "⏰", OnlineRules.Item.TIME in myUsed())) return
+        itemBusy = true
+        room.useTime(uid) { ok ->
+            itemBusy = false
+            if (isFinishing || isDestroyed) return@useTime
+            if (!ok) {
+                showError("아이템을 쓰지 못했어요")
+                return@useTime
+            }
+            // 서버가 받아 준 뒤에만 뺀다 — 실패했는데 아이템만 사라지면 억울하다
+            Wallet.useItem(this, "item_time")
+            audio.play("sfx_ok")
+            refreshItemBar()
+        }
+    }
+
+    private fun useHintItem() {
+        if (!canUseItem("item_hint", "💡", hintUsed)) return
+        val hints = engine.hintWords(3)
+        if (hints.isEmpty()) {
+            showError("힌트로 알려줄 단어가 없어요")
+            return
+        }
+        hintUsed = true
+        Wallet.useItem(this, "item_hint")
+        audio.play("sfx_ok")
+        activeHint = "💡 ${hints.joinToString("  ·  ")}"
+        handler.removeCallbacks(hideErrorRunnable)
+        showHint(activeHint!!)
+        refreshItemBar()
+    }
+
+    private fun usePassItem() {
+        val uid = me ?: return
+        val opponent = snap?.opponentOf(uid) ?: return
+        if (!canUseItem("item_pass", "🔄", OnlineRules.Item.PASS in myUsed())) return
+        itemBusy = true
+        setInputEnabled(false)
+        submittedAt = Online.serverNow()
+        room.pass(uid, opponent) { ok ->
+            itemBusy = false
+            if (isFinishing || isDestroyed) return@pass
+            if (!ok) {
+                submittedAt = 0L
+                setInputEnabled(true)
+                showError("패스하지 못했어요")
+                return@pass
+            }
+            Wallet.useItem(this, "item_pass")
+            binding.etWord.setText("")
+            refreshItemBar()
+        }
+    }
+
+    private fun showHint(text: String) {
+        binding.tvError.setTextColor(ContextCompat.getColor(this, R.color.warn))
+        binding.tvError.text = text
+        binding.tvError.visibility = View.VISIBLE
+    }
+
+    private fun clearHint() {
+        if (activeHint == null) return
+        activeHint = null
+        handler.removeCallbacks(hideErrorRunnable)
+        binding.tvError.visibility = View.GONE
     }
 
     private fun openMyTurn(opponent: String?) {
@@ -261,6 +415,7 @@ class OnlineGameActivity : AppCompatActivity() {
             }
             is GameEngine.Verdict.Ok -> {
                 setInputEnabled(false)
+                clearHint()
                 binding.etWord.setText("")
                 submittedAt = Online.serverNow()
                 // 여기서 화면에 바로 올리지 않는다. 서버를 돌아온 단어만 올려야 두 폰의 순서가 같다.
@@ -281,8 +436,8 @@ class OnlineGameActivity : AppCompatActivity() {
         val now = Online.serverNow()
 
         // 남은 시간 막대. 내 차례든 상대 차례든 같은 마감을 보여 준다.
-        val leftMs = (OnlineRules.turnDeadline(s.turnAt) - now).coerceAtLeast(0L)
-        val totalMs = OnlineRules.TURN_SEC * 1000L
+        val leftMs = (OnlineRules.turnDeadline(s.turnAt, s.extra) - now).coerceAtLeast(0L)
+        val totalMs = OnlineRules.TURN_SEC * 1000L + s.extra
         binding.timerBar.max = 1000
         binding.timerBar.progress = ((leftMs * 1000) / totalMs).toInt().coerceIn(0, 1000)
         binding.tvTimer.text = String.format("%.1f초", leftMs / 1000f)
@@ -299,7 +454,7 @@ class OnlineGameActivity : AppCompatActivity() {
         binding.tvTimer.setTextColor(color)
 
         val opponent = s.opponentOf(uid) ?: return
-        when (val c = OnlineRules.judge(uid, s.turn, s.turnAt, s.gone[opponent], s.winner != null, now)) {
+        when (val c = OnlineRules.judge(uid, s.turn, s.turnAt, s.gone[opponent], s.winner != null, now, s.extra)) {
             is OnlineRules.Claim.Win -> declare(uid, c.reason)
             is OnlineRules.Claim.Lose -> {
                 val justSubmitted = submittedAt > 0L && now - submittedAt < SUBMIT_GRACE_MS
@@ -326,6 +481,14 @@ class OnlineGameActivity : AppCompatActivity() {
         val iWon = s.winner == me
         Wallet.recordOnlineResult(this, iWon)
         Wallet.clearOnlineInProgress(this)
+        Missions.bump(this, Mission.PLAY_3, 1)
+        Missions.bump(this, Mission.ONLINE_PLAY_1, 1)
+        if (iWon) Missions.bump(this, Mission.ONLINE_WIN_1, 1)
+        me?.let { uid ->
+            val mine = s.moves.filter { it.by == uid && !it.pass }
+            Missions.bump(this, Mission.LONG_WORD_3, mine.count { it.word.length >= 4 })
+        }
+        Missions.bump(this, Mission.VOICE_5, voiceWordCount)
 
         audio.play(if (iWon) "sfx_win" else "sfx_lose")
         if (iWon) vibrate(100, 50, 100, 50, 100) else vibrate(200, 100, 200)
@@ -410,7 +573,8 @@ class OnlineGameActivity : AppCompatActivity() {
         binding.tvError.setTextColor(ContextCompat.getColor(this, R.color.error))
         binding.tvError.text = message
         binding.tvError.visibility = View.VISIBLE
-        handler.postDelayed({ binding.tvError.visibility = View.GONE }, 2200L)
+        handler.removeCallbacks(hideErrorRunnable)
+        handler.postDelayed(hideErrorRunnable, 2200L)
         binding.inputBar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shake))
     }
 

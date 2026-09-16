@@ -9,9 +9,9 @@ import java.time.LocalDate
 class MissionsTest {
 
     @Test
-    fun `미션 풀은 7종이고 아이디가 겹치지 않는다`() {
-        assertEquals(7, Mission.entries.size)
-        assertEquals(7, Mission.entries.map { it.id }.toSet().size)
+    fun `미션 풀은 11종이고 아이디가 겹치지 않는다`() {
+        assertEquals(11, Mission.entries.size)
+        assertEquals(11, Mission.entries.map { it.id }.toSet().size)
     }
 
     @Test
@@ -19,6 +19,21 @@ class MissionsTest {
         val picked = Missions.pickDaily("2026-07-26")
         assertEquals(3, picked.size)
         assertEquals(3, picked.toSet().size)
+    }
+
+    @Test
+    fun `온라인 미션은 하루에 하나까지만 뽑힌다`() {
+        var day = java.time.LocalDate.parse("2026-01-01")
+        var sawOnline = false
+        repeat(1000) {
+            val picked = Missions.pickDaily(day.toString())
+            assertEquals(3, picked.toSet().size)
+            val online = picked.count { it.online }
+            assertTrue("$day 에 온라인 미션이 $online 개", online <= 1)
+            if (online == 1) sawOnline = true
+            day = day.plusDays(1)
+        }
+        assertTrue("온라인 미션이 한 번도 안 뽑혔다", sawOnline)
     }
 
     @Test

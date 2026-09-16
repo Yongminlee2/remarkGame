@@ -224,7 +224,7 @@ class OnlineRoom(val code: String) {
         ref.onDisconnect().cancel()
     }
 
-    /** 방장이 방을 지운다. 판이 끝났거나 대기 중에 나갈 때. */
+    /** 방을 지운다. 방장은 언제든, 손님은 결과가 난 뒤에만(서버 규칙). */
     fun delete() {
         keepOnDisconnect()
         ref.removeValue()

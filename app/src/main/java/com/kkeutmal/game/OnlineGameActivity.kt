@@ -333,8 +333,12 @@ class OnlineGameActivity : AppCompatActivity() {
         scrollToEnd()
         binding.tvRequired.text = if (iWon) "승리!" else "패배"
 
-        // 방장은 조금 기다렸다 방을 지운다. 바로 지우면 상대 폰이 결과를 받기 전에 방이 사라진다.
-        if (isHost) handler.postDelayed({ deleteRoomOnce() }, 5_000L)
+        // 결과가 났으니 "끊기면 나갔다고 적기" 를 푼다. 안 풀면 방을 지운 뒤에 그 표시만 남는다.
+        room.stopListening()
+        room.keepOnDisconnect()
+        // 조금 기다렸다 방을 지운다. 바로 지우면 상대 폰이 결과를 받기 전에 방이 사라진다.
+        // 둘 다 지우러 간다 — 방장이 나가 버린 판은 손님이 치워야 방이 서버에 안 남는다.
+        handler.postDelayed({ deleteRoomOnce() }, 5_000L)
 
         MaterialAlertDialogBuilder(this)
             .setTitle(if (iWon) "🏆 승리!" else "😢 패배")
@@ -441,7 +445,7 @@ class OnlineGameActivity : AppCompatActivity() {
             if (finished) {
                 // 결과가 난 방에 "나갔다" 표시가 남지 않게 푼다
                 room.keepOnDisconnect()
-                if (isHost && snap?.winner != null) deleteRoomOnce()
+                if (snap?.winner != null) deleteRoomOnce()
             }
             // 결과 없이 판 도중에 나가면 연결을 돌려주는 순간 서버가 "나갔다" 를 적고,
             // 상대 폰이 10초 뒤 승리를 선언한다. 내 쪽 전적은 여기서 바로 센다.

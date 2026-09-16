@@ -8,7 +8,7 @@
         ".read": "auth != null",
         ".validate": "$code.matches(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/)",
 
-        ".write": "auth != null && ((!data.exists() && newData.child('host').val() === auth.uid && newData.child('state').val() === 'waiting' && !newData.child('guest').exists() && newData.child('createdAt').val() === now) || (data.exists() && !newData.exists() && data.child('host').val() === auth.uid))",
+        ".write": "auth != null && ((!data.exists() && newData.child('host').val() === auth.uid && newData.child('state').val() === 'waiting' && !newData.child('guest').exists() && newData.child('createdAt').val() === now) || (data.exists() && !newData.exists() && (data.child('host').val() === auth.uid || (data.child('guest').val() === auth.uid && data.child('result').exists()))))",
 
         "host": { ".validate": "newData.isString()" },
         "hostAvatar": { ".validate": "newData.isString() && newData.val().matches(/^[a-z]+_[a-z]+_[a-z]+$/)" },
@@ -25,7 +25,7 @@
 
         "state": {
           ".write": "auth != null && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid)",
-          ".validate": "(newData.val() === 'playing' && data.val() === 'waiting' && newData.parent().child('guest').exists()) || newData.val() === 'done'"
+          ".validate": "(newData.val() === 'waiting' && !data.exists()) || (newData.val() === 'playing' && data.val() === 'waiting' && newData.parent().child('guest').exists()) || newData.val() === 'done'"
         },
 
         "first": {
@@ -56,7 +56,7 @@
 
         "gone": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid)",
             ".validate": "newData.isNumber()"
           }
         }

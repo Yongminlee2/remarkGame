@@ -634,6 +634,8 @@ class GameActivity : AppCompatActivity() {
         Wallet.recordRounds(this, engine.round)
         if (mode == GameMode.ADVENTURE && win) {
             Wallet.setStage(this, stageNumber + 1)
+            // 순위표에 올리기로 한 사람만 잠깐 연결해 올린다(안 한 사람은 아무것도 안 나간다)
+            RankingActivity.syncInBackground(this)
         }
 
         fun bump(m: Mission, amount: Int) {

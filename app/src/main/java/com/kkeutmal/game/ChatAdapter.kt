@@ -21,6 +21,9 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val items = ArrayList<ChatItem>()
     var playerAvatarId: String = AvatarCatalog.DEFAULT_ID
 
+    /** 왼쪽 말풍선에 붙는 이름표. AI 대전은 "AI", 친구 대전은 "친구". */
+    var otherLabel: String = "AI"
+
     fun add(item: ChatItem) {
         items.add(item)
         notifyItemInserted(items.size - 1)
@@ -63,11 +66,14 @@ class ChatAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             is ChatItem.Ai -> {
                 val b = (holder as AiHolder).b
                 b.tvWord.text = item.word
+                b.tvSpeaker.text = otherLabel
                 bindMeaning(b.tvMeaning, item.meaning)
             }
             is ChatItem.Player -> {
                 val b = (holder as PlayerHolder).b
                 b.tvWord.text = item.word
+                // 친구 대전은 점수가 없다. "+0점" 을 띄우면 뭔가 잘못된 것처럼 보인다.
+                b.tvPoints.visibility = if (item.points > 0) View.VISIBLE else View.GONE
                 b.tvPoints.text = "+${item.points}점"
                 b.avatarView.bind(AvatarCatalog.byIdOrDefault(playerAvatarId))
                 bindMeaning(b.tvMeaning, item.meaning)

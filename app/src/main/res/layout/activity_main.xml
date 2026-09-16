@@ -277,6 +277,37 @@
             app:cornerRadius="31dp" />
 
         <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOnline"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:text="👥 친구와 대전"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/accent2_dark"
+                app:cornerRadius="26dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRanking"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="5dp"
+                android:layout_weight="1"
+                android:text="🏆 랭킹"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/chip_bg"
+                app:cornerRadius="26dp" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/missionBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

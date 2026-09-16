@@ -67,6 +67,59 @@ object OnlineRules {
     fun opponentAbandoned(goneSince: Long?, serverNow: Long): Boolean =
         goneSince != null && serverNow - goneSince > DISCONNECT_GRACE_MS
 
+    // ---------- 결과 선언 ----------
+
+    /**
+     * 결과에 적는 까닭. 서버 규칙이 20자까지만 받으므로 짧은 영문 코드로 적고,
+     * 화면 문구는 [resultMessage] 가 내 쪽에서 본 말로 바꾼다.
+     */
+    object Reason {
+        const val TIMEOUT = "timeout"
+        const val LEFT = "left"
+        const val SURRENDER = "surrender"
+        const val HANBANG = "hanbang"
+        const val INVALID = "invalid"
+        val ALL = listOf(TIMEOUT, LEFT, SURRENDER, HANBANG, INVALID)
+    }
+
+    sealed class Claim {
+        data object None : Claim()
+        data class Win(val reason: String) : Claim()
+        data class Lose(val reason: String) : Claim()
+    }
+
+    /**
+     * 지금 내가 결과를 선언해야 하는가. **두 폰이 같은 상태를 보면 같은 답을 낸다.**
+     *
+     * 지는 선언(내 시간 초과)은 마감에 바로 한다 — 내가 늦게 선언하면 그만큼 시간을 번다.
+     * 이기는 선언(상대 시간 초과·나감)은 여유를 둔다 — 상대 단어가 오는 중일 수 있다.
+     * 나감을 가장 먼저 본다. 상대가 사라진 사이에 내 시간이 다 된 것을 패배로 치면 억울하다.
+     */
+    fun judge(
+        me: String,
+        turn: String?,
+        turnAt: Long,
+        opponentGoneSince: Long?,
+        resultDecided: Boolean,
+        serverNow: Long
+    ): Claim {
+        if (resultDecided || turn == null || turnAt <= 0L) return Claim.None
+        if (opponentAbandoned(opponentGoneSince, serverNow)) return Claim.Win(Reason.LEFT)
+        if (turn == me && serverNow >= turnDeadline(turnAt)) return Claim.Lose(Reason.TIMEOUT)
+        if (turn != me && opponentTimedOut(turnAt, serverNow)) return Claim.Win(Reason.TIMEOUT)
+        return Claim.None
+    }
+
+    /** 결과를 내 쪽에서 본 문장으로. */
+    fun resultMessage(reason: String?, iWon: Boolean): String = when (reason) {
+        Reason.TIMEOUT -> if (iWon) "친구가 시간을 넘겼어요" else "시간을 넘겼어요"
+        Reason.LEFT -> if (iWon) "친구가 나갔어요" else "연결이 끊겨 패배했어요"
+        Reason.SURRENDER -> if (iWon) "친구가 항복했어요" else "항복했어요"
+        Reason.HANBANG -> if (iWon) "한방단어로 이겼어요" else "한방단어에 당했어요"
+        Reason.INVALID -> if (iWon) "친구가 규칙에 맞지 않는 단어를 냈어요" else "규칙에 맞지 않는 단어라 패배했어요"
+        else -> if (iWon) "이겼어요" else "졌어요"
+    }
+
     // ---------- 랭킹 ----------
     //
     // 랭킹은 **모험 최고 스테이지**로 매긴다. 친구 대전 결과로 매기면 폰 두 대로 짜고 쳐서

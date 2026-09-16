@@ -297,6 +297,25 @@ object Wallet {
         p(ctx).edit().putInt(key, p(ctx).getInt(key, 0) + 1).apply()
     }
 
+    // 친구 대전을 하다 앱이 통째로 꺼진 판. 결과를 못 보고 사라졌으니 다음에 켤 때 패배로 센다
+    // — AI 대전의 "앱을 꺼 버린 판" 과 같은 약속이다. 화면을 정상적으로 나가면 그 자리에서 센다.
+
+    fun markOnlineStarted(ctx: Context) {
+        p(ctx).edit().putBoolean("online_in_progress", true).apply()
+    }
+
+    fun clearOnlineInProgress(ctx: Context) {
+        p(ctx).edit().putBoolean("online_in_progress", false).apply()
+    }
+
+    /** @return 꺼져 버린 친구 대전을 패배로 처리했는가 */
+    fun settleAbandonedOnline(ctx: Context): Boolean {
+        if (!p(ctx).getBoolean("online_in_progress", false)) return false
+        clearOnlineInProgress(ctx)
+        recordOnlineResult(ctx, win = false)
+        return true
+    }
+
     /** 친구 대전 패배 1회를 지운다(상점에서 광고를 보고 쓴다). 지울 게 없으면 false. */
     fun removeOneOnlineLoss(ctx: Context): Boolean {
         val cur = onlineLosses(ctx)

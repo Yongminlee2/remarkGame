@@ -64,7 +64,9 @@ class MainActivity : AppCompatActivity() {
         // **onResume 이 아니라 onCreate 에 둔다.** 게임에서 돌아올 때는 onResume 만 도는데,
         // 거기 두면 정상적으로 끝낸 판까지 한 번 더 세게 된다. onCreate 는 앱이 새로
         // 켜질 때만 돌므로 "꺼 버린 판" 만 걸린다.
-        if (Wallet.settleAbandonedGame(this)) {
+        // 친구 대전 중에 꺼진 판도 같은 약속으로 센다. 전적이 따로라 따로 정산한다.
+        val abandonedOnline = Wallet.settleAbandonedOnline(this)
+        if (Wallet.settleAbandonedGame(this) || abandonedOnline) {
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle("지난 판이 패배로 기록됐어요")
                 .setMessage(
@@ -116,6 +118,12 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btnAdventure.setOnClickListener {
             startActivity(Intent(this, AdventureActivity::class.java))
+        }
+        binding.btnOnline.setOnClickListener {
+            startActivity(Intent(this, OnlineLobbyActivity::class.java))
+        }
+        binding.btnRanking.setOnClickListener {
+            startActivity(Intent(this, RankingActivity::class.java))
         }
         binding.btnCollection.setOnClickListener {
             startActivity(Intent(this, CollectionActivity::class.java))

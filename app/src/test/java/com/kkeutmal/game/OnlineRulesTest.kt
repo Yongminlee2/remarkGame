@@ -74,6 +74,65 @@ class OnlineRulesTest {
         assertTrue(OnlineRules.opponentAbandoned(gone, gone + OnlineRules.DISCONNECT_GRACE_MS + 1))
     }
 
+    // ---------- 결과 선언 ----------
+
+    private val me = "ME"
+    private val you = "YOU"
+    private val t0 = 10_000_000L
+
+    @Test
+    fun `결과가 이미 있으면 아무도 다시 선언하지 않는다`() {
+        assertEquals(
+            OnlineRules.Claim.None,
+            OnlineRules.judge(me, you, t0, opponentGoneSince = t0 - 999_999, resultDecided = true, serverNow = t0 + 999_999)
+        )
+    }
+
+    @Test
+    fun `내 시간은 마감에 바로 지고 상대 시간은 여유 뒤에 이긴다`() {
+        val deadline = OnlineRules.turnDeadline(t0)
+        assertEquals(OnlineRules.Claim.Lose(OnlineRules.Reason.TIMEOUT),
+            OnlineRules.judge(me, turn = me, turnAt = t0, opponentGoneSince = null, resultDecided = false, serverNow = deadline))
+        assertEquals(OnlineRules.Claim.None,
+            OnlineRules.judge(me, turn = you, turnAt = t0, opponentGoneSince = null, resultDecided = false, serverNow = deadline))
+        assertEquals(OnlineRules.Claim.Win(OnlineRules.Reason.TIMEOUT),
+            OnlineRules.judge(me, turn = you, turnAt = t0, opponentGoneSince = null, resultDecided = false,
+                serverNow = deadline + OnlineRules.TURN_GRACE_MS + 1))
+    }
+
+    @Test
+    fun `두 폰이 같은 상황이면 반대 결론을 내 서로 이겼다고 우기지 않는다`() {
+        // 상대(YOU) 차례에서 시간이 넉넉히 지났다. 내 폰은 이겼다고, 상대 폰은 졌다고 봐야 한다.
+        val now = OnlineRules.turnDeadline(t0) + OnlineRules.TURN_GRACE_MS + 1
+        val mine = OnlineRules.judge(me, you, t0, null, false, now)
+        val theirs = OnlineRules.judge(you, you, t0, null, false, now)
+        assertTrue(mine is OnlineRules.Claim.Win)
+        assertTrue(theirs is OnlineRules.Claim.Lose)
+    }
+
+    @Test
+    fun `상대가 사라진 사이 내 시간이 다 돼도 지는 게 아니라 이긴다`() {
+        val now = OnlineRules.turnDeadline(t0) + 60_000
+        assertEquals(OnlineRules.Claim.Win(OnlineRules.Reason.LEFT),
+            OnlineRules.judge(me, turn = me, turnAt = t0, opponentGoneSince = t0, resultDecided = false, serverNow = now))
+    }
+
+    @Test
+    fun `시작 전이면 판정하지 않는다`() {
+        assertEquals(OnlineRules.Claim.None, OnlineRules.judge(me, null, 0, null, false, t0))
+        assertEquals(OnlineRules.Claim.None, OnlineRules.judge(me, me, 0, null, false, t0))
+    }
+
+    @Test
+    fun `결과 까닭은 서버가 받는 20자 안이고 모든 까닭에 문장이 있다`() {
+        for (r in OnlineRules.Reason.ALL) {
+            assertTrue("$r 이 20자를 넘는다", r.length <= 20)
+            assertTrue(rules.contains("length <= 20"))
+            assertFalse("$r 문장이 기본값으로 떨어진다", OnlineRules.resultMessage(r, true) == "이겼어요")
+            assertFalse("$r 문장이 기본값으로 떨어진다", OnlineRules.resultMessage(r, false) == "졌어요")
+        }
+    }
+
     // ---------- 랭킹 ----------
 
     /** database.rules.json 의 ranks 검증식을 그대로 옮긴 것. */

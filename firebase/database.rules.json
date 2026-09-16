@@ -1,0 +1,74 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".validate": "$code.matches(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/)",
+
+        ".write": "auth != null && ((!data.exists() && newData.child('host').val() === auth.uid && newData.child('state').val() === 'waiting' && !newData.child('guest').exists() && newData.child('createdAt').val() === now) || (data.exists() && !newData.exists() && data.child('host').val() === auth.uid))",
+
+        "host": { ".validate": "newData.isString()" },
+        "hostAvatar": { ".validate": "newData.isString() && newData.val().matches(/^[a-z]+_[a-z]+_[a-z]+$/)" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+
+        "guest": {
+          ".write": "auth != null && !data.exists() && newData.val() === auth.uid && data.parent().child('state').val() === 'waiting' && now - data.parent().child('createdAt').val() <= 600000"
+        },
+        "guestAvatar": {
+          ".write": "auth != null && newData.parent().child('guest').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z]+_[a-z]+_[a-z]+$/)"
+        },
+
+        "state": {
+          ".write": "auth != null && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid)",
+          ".validate": "(newData.val() === 'playing' && data.val() === 'waiting' && newData.parent().child('guest').exists()) || newData.val() === 'done'"
+        },
+
+        "first": {
+          ".write": "auth != null && !data.exists() && data.parent().child('host').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 20"
+        },
+
+        "turn": {
+          ".write": "auth != null && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid) && (!data.exists() || data.val() === auth.uid)",
+          ".validate": "newData.val() === newData.parent().child('host').val() || newData.val() === newData.parent().child('guest').val()"
+        },
+        "turnAt": {
+          ".write": "auth != null && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid)",
+          ".validate": "newData.val() === now"
+        },
+
+        "moves": {
+          "$move": {
+            ".write": "auth != null && !data.exists() && root.child('rooms').child($code).child('state').val() === 'playing' && root.child('rooms').child($code).child('turn').val() === auth.uid && !root.child('rooms').child($code).child('result').exists()",
+            ".validate": "newData.child('by').val() === auth.uid && newData.child('word').isString() && newData.child('word').val().length >= 2 && newData.child('word').val().length <= 20 && newData.child('at').val() === now"
+          }
+        },
+
+        "result": {
+          ".write": "auth != null && !data.exists() && (root.child('rooms').child($code).child('host').val() === auth.uid || root.child('rooms').child($code).child('guest').val() === auth.uid)",
+          ".validate": "(newData.child('winner').val() === newData.parent().child('host').val() || newData.child('winner').val() === newData.parent().child('guest').val()) && newData.child('reason').isString() && newData.child('reason').val().length <= 20 && newData.child('at').val() === now"
+        },
+
+        "gone": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isNumber()"
+          }
+        }
+      }
+    },
+
+    "ranks": {
+      ".read": "auth != null",
+      ".indexOn": ["stage"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['avatar', 'stage', 'at']) && newData.child('avatar').isString() && newData.child('avatar').val().matches(/^[a-z]+_[a-z]+_[a-z]+$/) && newData.child('stage').isNumber() && newData.child('stage').val() >= 1 && newData.child('stage').val() <= 1000 && newData.child('at').val() === now && ((!data.exists() && newData.child('stage').val() <= 10) || (data.exists() && now - data.child('at').val() >= 5000 && newData.child('stage').val() >= data.child('stage').val() && newData.child('stage').val() - data.child('stage').val() <= 20 && newData.child('stage').val() <= data.child('stage').val() + 1 + (now - data.child('at').val()) / 60000))"
+      }
+    }
+  }
+}

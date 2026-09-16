@@ -282,6 +282,29 @@ object Wallet {
         return true
     }
 
+    // ---------- 친구 대전 전적 ----------
+    //
+    // AI 전적과 **따로** 둔다. 친구끼리 짜고 치는 판이 섞이면 전적이 의미가 없어진다.
+    // 기기 안에만 두고 랭킹에도 쓰지 않는다 — 그래서 광고로 패배를 지워도 순위는 흔들리지 않는다.
+    // 코인도 주지 않는다. 폰 두 대로 일부러 져 주며 코인을 긁는 것을 막을 방법이 없어서다.
+
+    fun onlineWins(ctx: Context) = p(ctx).getInt("online_wins", 0)
+
+    fun onlineLosses(ctx: Context) = p(ctx).getInt("online_losses", 0)
+
+    fun recordOnlineResult(ctx: Context, win: Boolean) {
+        val key = if (win) "online_wins" else "online_losses"
+        p(ctx).edit().putInt(key, p(ctx).getInt(key, 0) + 1).apply()
+    }
+
+    /** 친구 대전 패배 1회를 지운다(상점에서 광고를 보고 쓴다). 지울 게 없으면 false. */
+    fun removeOneOnlineLoss(ctx: Context): Boolean {
+        val cur = onlineLosses(ctx)
+        if (cur <= 0) return false
+        p(ctx).edit().putInt("online_losses", cur - 1).apply()
+        return true
+    }
+
     // ---------- 중간에 꺼 버린 판 ----------
     //
     // 지고 있을 때 앱을 꺼서 패배를 피하는 것을 막는다. 판을 시작할 때 표시를 남기고

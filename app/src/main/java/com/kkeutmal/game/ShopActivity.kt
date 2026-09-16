@@ -199,17 +199,25 @@ class ShopActivity : AppCompatActivity() {
             list.addView(row)
         }
 
-        buildLossEraser(list)
+        buildLossErasers(list)
     }
 
     /**
-     * 광고를 보고 패배 1회를 지운다.
+     * 광고를 보고 패배 1회를 지운다. AI 대전과 친구 대전 두 가지를 따로 보여 준다.
      *
      * 아이템이 아니라 전적을 직접 건드리는 것이라 아이템 목록과 따로 그린다.
-     * 지울 패배가 없으면 줄째로 감춘다 — 0패인 사람에게 권할 이유가 없다.
+     * 지울 패배가 없는 줄은 감춘다 — 0패인 사람에게 권할 이유가 없다.
+     * 친구 대전 전적은 랭킹과 무관하므로 지워도 순위는 그대로다.
      */
-    private fun buildLossEraser(list: LinearLayout) {
-        if (Wallet.losses(this) <= 0) return
+    private fun buildLossErasers(list: LinearLayout) {
+        addLossEraser(list, "패배 지우기", Wallet.losses(this)) { Wallet.removeOneLoss(this) }
+        addLossEraser(list, "친구 대전 패배 지우기", Wallet.onlineLosses(this)) {
+            Wallet.removeOneOnlineLoss(this)
+        }
+    }
+
+    private fun addLossEraser(list: LinearLayout, title: String, count: Int, erase: () -> Boolean) {
+        if (count <= 0) return
 
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -228,7 +236,7 @@ class ShopActivity : AppCompatActivity() {
                 .apply { setMargins(dp(12), 0, dp(8), 0) }
         }
         mid.addView(TextView(this).apply {
-            text = "패배 지우기  (현재 ${Wallet.losses(this@ShopActivity)}패)"
+            text = "$title  (현재 ${count}패)"
             textSize = 15f
             setTextColor(ContextCompat.getColor(this@ShopActivity, R.color.text_primary))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
@@ -241,7 +249,7 @@ class ShopActivity : AppCompatActivity() {
         })
         row.addView(mid)
         row.addView(
-            smallButton("🎬", R.color.accent2_dark, Ads.isRewardedReady()) { watchAdToEraseLoss() }
+            smallButton("🎬", R.color.accent2_dark, Ads.isRewardedReady()) { watchAdToErase(erase) }
         )
         list.addView(row)
     }
@@ -258,11 +266,9 @@ class ShopActivity : AppCompatActivity() {
         }
     }
 
-    private fun watchAdToEraseLoss() {
+    private fun watchAdToErase(erase: () -> Boolean) {
         Ads.showRewarded(this) { earned ->
-            if (earned) {
-                if (Wallet.removeOneLoss(this)) toast("패배 1회를 지웠어요")
-            }
+            if (earned && erase()) toast("패배 1회를 지웠어요")
             refresh()
         }
     }

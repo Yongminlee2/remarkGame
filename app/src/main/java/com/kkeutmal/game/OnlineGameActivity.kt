@@ -278,7 +278,7 @@ class OnlineGameActivity : AppCompatActivity() {
         } else if (s.turn != uid) {
             setInputEnabled(false)
             clearHint()
-            val typing = opponent?.let { s.typing[it] }
+            val typing = opponent?.let { s.typing[it] }?.let { WordDict.dictPrefixOf(it) }
             if (typing.isNullOrEmpty()) {
                 binding.tvRequired.text = "상대 차례예요…"
             } else {

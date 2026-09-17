@@ -194,6 +194,26 @@ object WordDict {
         return lo until hi
     }
 
+    /** prefix 로 시작하는 낱말이 사전에 하나라도 있는가 */
+    fun hasPrefix(prefix: String): Boolean {
+        if (prefix.isEmpty()) return false
+        val i = lowerBound(prefix)
+        return i < words.size && words[i].startsWith(prefix)
+    }
+
+    /**
+     * 온라인 대전에서 상대에게 보여 줄 "쓰는 중" 글자. **사전 낱말의 앞부분인 데까지만** 남긴다.
+     *
+     * 입력창 글자를 그대로 보여 주면 사전에 없는 욕설을 적어 상대에게 보여 줄 수 있다.
+     * 사전 낱말은 원래 대전에서 낼 수 있는 말이라 이렇게 거르면 더 드러나는 것이 없다.
+     * 받는 쪽 폰에서 거르므로 조작한 앱이 아무 글자나 보내도 화면에는 안 나온다.
+     */
+    fun dictPrefixOf(text: String): String {
+        var t = text.trim()
+        while (t.isNotEmpty() && !hasPrefix(t)) t = t.dropLast(1)
+        return t
+    }
+
     private fun lowerBound(prefix: String): Int {
         var lo = 0
         var hi = words.size

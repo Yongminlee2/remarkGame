@@ -100,6 +100,46 @@
       }
     },
 
+    "rankedRooms": {
+      "$room": {
+        ".write": "auth != null && !data.exists() && newData.exists() && (root.child('rooms').child($room).child('host').val() === auth.uid || root.child('rooms').child($room).child('guest').val() === auth.uid) && root.child('rooms').child($room).child('invited').exists() && root.child('rooms').child($room).child('result').exists() && root.child('rooms').child($room).child('result').child('at').val() - root.child('rooms').child($room).child('createdAt').val() >= 20000",
+        ".validate": "newData.val() === now"
+      }
+    },
+
+    "onlineRanks": {
+      ".read": "auth != null",
+      ".indexOn": ["wins"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && !newData.exists()",
+        "show": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isBoolean()"
+        },
+        "avatar": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z]+_[a-z]+_[a-z]+$/)"
+        },
+        "room": {
+          ".write": "auth != null && newData.exists()",
+          ".validate": "newData.isString() && newData.parent().parent().parent().child('rankedRooms').child(newData.val()).exists() && !data.parent().parent().parent().child('rankedRooms').child(newData.val()).exists() && (root.child('rooms').child(newData.val()).child('host').val() === $uid || root.child('rooms').child(newData.val()).child('guest').val() === $uid)"
+        },
+        "wins": {
+          ".write": "auth != null && newData.exists()",
+          ".validate": "newData.isNumber() && ((!data.exists() && newData.val() === 1) || (data.exists() && newData.val() === data.val() + 1)) && newData.parent().child('room').val() !== data.parent().child('room').val() && root.child('rooms').child(newData.parent().child('room').val()).child('result').child('winner').val() === $uid && newData.parent().child('winAt').val() === now"
+        },
+        "winAt": {
+          ".write": "auth != null && newData.exists()",
+          ".validate": "newData.val() === now && (!data.exists() || now - data.val() >= 45000)"
+        },
+        "losses": {
+          ".write": "auth != null && newData.exists()",
+          ".validate": "newData.isNumber() && ((!data.exists() && newData.val() === 1) || (data.exists() && newData.val() === data.val() + 1)) && newData.parent().child('room').val() !== data.parent().child('room').val() && root.child('rooms').child(newData.parent().child('room').val()).child('result').child('winner').val() !== $uid"
+        },
+        "$other": { ".validate": false }
+      }
+    },
+
     "ranks": {
       ".read": "auth != null",
       ".indexOn": ["stage"],

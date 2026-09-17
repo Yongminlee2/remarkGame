@@ -481,6 +481,17 @@ class OnlineGameActivity : AppCompatActivity() {
         val iWon = s.winner == me
         Wallet.recordOnlineResult(this, iWon)
         Wallet.clearOnlineInProgress(this)
+        // 랜덤 매칭 판이면 순위에 센다. 폰의 전적과 달리 광고로 지워지지 않는 서버 기록이다.
+        me?.let { uid ->
+            val opponent = s.opponentOf(uid)
+            val winner = s.winner
+            if (opponent != null && winner != null &&
+                OnlineRules.countsForRanking(s.invited != null, s.createdAt, s.resultAt)
+            ) {
+                Ranking.countOnline(s.code, winner, if (winner == uid) opponent else uid)
+            }
+            if (RankingActivity.optedIn(this)) Ranking.setOnlineShown(uid, true, Wallet.selectedAvatarId(this))
+        }
         Missions.bump(this, Mission.PLAY_3, 1)
         Missions.bump(this, Mission.ONLINE_PLAY_1, 1)
         if (iWon) Missions.bump(this, Mission.ONLINE_WIN_1, 1)

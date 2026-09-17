@@ -181,6 +181,41 @@ object OnlineRules {
             .minWithOrNull(compareBy<QueueEntry>({ it.at }, { it.uid }))
             ?.uid
 
+    // ---------- 온라인 대전 순위 ----------
+    //
+    // **폰의 전적이 아니라 서버가 판마다 센 기록**으로 매긴다. 폰의 전적은 광고로 패배를 지울 수
+    // 있어 순위에 쓰면 안 된다. 판이 끝나면 두 폰이 다 세러 가고, 서버 규칙이 방마다 한 번만 받는다.
+    //
+    // 세는 판: **랜덤 매칭 방**(invited 가 있는 방)이고, 방이 생기고 [RANKED_MIN_MATCH_MS] 이상 지나 결과가 난 판.
+    // 친구 코드 방은 둘이 짜고 승수를 쌓기가 너무 쉬워 뺐다. 이긴 기록은 [RANKED_WIN_GAP_MS] 에 한 번만 받는다.
+    //
+    // ponytail: 서버가 판정하지 않으므로 조작한 앱이 진짜 상대에게 억지 승리를 선언하거나,
+    // 두 계정으로 방을 직접 만들어 짜고 치는 것은 늦출 뿐 못 막는다. 막으려면 Cloud Functions 에서
+    // 방의 단어 기록을 다시 검증해야 한다(유료 요금제).
+
+    /** 이보다 빨리 끝난 판은 순위에 안 센다. 규칙 파일의 `>= 20000` 과 짝. */
+    const val RANKED_MIN_MATCH_MS = 20_000L
+
+    /** 한 사람의 이긴 기록을 다시 받기까지의 간격. 규칙 파일의 `>= 45000` 과 짝. */
+    const val RANKED_WIN_GAP_MS = 45_000L
+
+    fun countsForRanking(randomMatch: Boolean, createdAt: Long, resultAt: Long): Boolean =
+        randomMatch && createdAt > 0L && resultAt - createdAt >= RANKED_MIN_MATCH_MS
+
+    data class OnlineRankEntry(
+        val uid: String,
+        val avatar: String?,
+        val wins: Int,
+        val losses: Int,
+        val shown: Boolean
+    )
+
+    /** 순위표에 올릴 줄. 올리기를 고른 사람만, 한 번이라도 이긴 사람만. 승수 많은 순, 같으면 패가 적은 순. */
+    fun onlineLeaderboard(entries: List<OnlineRankEntry>, limit: Int): List<OnlineRankEntry> =
+        entries.filter { it.shown && it.wins > 0 }
+            .sortedWith(compareByDescending<OnlineRankEntry> { it.wins }.thenBy { it.losses }.thenBy { it.uid })
+            .take(limit)
+
     // ---------- 랭킹 ----------
     //
     // 랭킹은 **모험 최고 스테이지**로 매긴다. 온라인 대전 결과로 매기면 폰 두 대로 짜고 쳐서

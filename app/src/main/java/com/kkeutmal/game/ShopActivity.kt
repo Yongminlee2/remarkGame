@@ -211,12 +211,19 @@ class ShopActivity : AppCompatActivity() {
      */
     private fun buildLossErasers(list: LinearLayout) {
         addLossEraser(list, "패배 지우기", Wallet.losses(this)) { Wallet.removeOneLoss(this) }
-        addLossEraser(list, "온라인 대전 패배 지우기", Wallet.onlineLosses(this)) {
+        // 온라인 순위는 서버가 센 기록이라 여기서 지워지지 않는다. 지워질 거라 믿고 광고를 보지 않게 알린다.
+        addLossEraser(list, "온라인 대전 패배 지우기", Wallet.onlineLosses(this), note = "랭킹 기록은 그대로예요") {
             Wallet.removeOneOnlineLoss(this)
         }
     }
 
-    private fun addLossEraser(list: LinearLayout, title: String, count: Int, erase: () -> Boolean) {
+    private fun addLossEraser(
+        list: LinearLayout,
+        title: String,
+        count: Int,
+        note: String? = null,
+        erase: () -> Boolean
+    ) {
         if (count <= 0) return
 
         val row = LinearLayout(this).apply {
@@ -242,8 +249,9 @@ class ShopActivity : AppCompatActivity() {
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
         mid.addView(TextView(this).apply {
-            text = if (Ads.isRewardedReady()) "광고를 보면 전적에서 패배 1회를 지워요"
-            else "광고를 준비하고 있어요. 잠시만요"
+            text = if (Ads.isRewardedReady()) {
+                "광고를 보면 전적에서 패배 1회를 지워요" + (note?.let { " · $it" } ?: "")
+            } else "광고를 준비하고 있어요. 잠시만요"
             textSize = 12f
             setTextColor(ContextCompat.getColor(this@ShopActivity, R.color.text_dim))
         })

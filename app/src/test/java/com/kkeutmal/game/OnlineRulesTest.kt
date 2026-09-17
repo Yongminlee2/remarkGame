@@ -191,6 +191,28 @@ class OnlineRulesTest {
         }
     }
 
+    // ---------- 온라인 대전 순위 ----------
+
+    @Test
+    fun `랜덤 매칭에서 충분히 오래 한 판만 순위에 센다`() {
+        val t0 = 1_000_000L
+        assertTrue(OnlineRules.countsForRanking(true, t0, t0 + OnlineRules.RANKED_MIN_MATCH_MS))
+        assertFalse("친구 방", OnlineRules.countsForRanking(false, t0, t0 + 999_999))
+        assertFalse("너무 빨리 끝남", OnlineRules.countsForRanking(true, t0, t0 + OnlineRules.RANKED_MIN_MATCH_MS - 1))
+        assertFalse("시각 없음", OnlineRules.countsForRanking(true, 0L, 999_999))
+    }
+
+    @Test
+    fun `온라인 순위표는 올린 사람만 승수 많은 순, 같으면 패 적은 순`() {
+        fun e(uid: String, w: Int, l: Int, shown: Boolean = true) = OnlineRules.OnlineRankEntry(uid, null, w, l, shown)
+        val board = OnlineRules.onlineLeaderboard(
+            listOf(e("a", 5, 9), e("b", 7, 1), e("c", 5, 2), e("hidden", 99, 0, shown = false), e("zero", 0, 3)),
+            limit = 10
+        )
+        assertEquals(listOf("b", "c", "a"), board.map { it.uid })
+        assertEquals(listOf("b"), OnlineRules.onlineLeaderboard(listOf(e("a", 5, 9), e("b", 7, 1)), limit = 1).map { it.uid })
+    }
+
     // ---------- 랭킹 ----------
 
     /** database.rules.json 의 ranks 검증식을 그대로 옮긴 것. */
@@ -265,6 +287,14 @@ class OnlineRulesTest {
             rules.contains("<= ${OnlineRules.ROOM_TTL_MS}")
         )
         assertTrue("규칙 파일의 시간 아이템 값이 앱과 다르다", rules.contains("=== ${OnlineRules.TIME_ITEM_MS}"))
+        assertTrue(
+            "규칙 파일의 순위에 세는 최소 판 길이가 앱과 다르다",
+            rules.substringAfter("\"rankedRooms\"").contains(">= ${OnlineRules.RANKED_MIN_MATCH_MS}")
+        )
+        assertTrue(
+            "규칙 파일의 이긴 기록 간격이 앱과 다르다",
+            rules.substringAfter("\"onlineRanks\"").contains(">= ${OnlineRules.RANKED_WIN_GAP_MS}")
+        )
         assertTrue(
             "규칙 파일이 받는 아이템 종류가 앱과 다르다",
             rules.contains("\$item === '${OnlineRules.Item.TIME}' || \$item === '${OnlineRules.Item.PASS}'")

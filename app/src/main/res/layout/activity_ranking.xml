@@ -39,10 +39,41 @@
                 android:textSize="22sp" />
         </LinearLayout>
 
-        <TextView
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="12dp"
+            app:checkedButton="@+id/tabStage"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabStage"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="🗺 스테이지"
+                android:textSize="14sp"
+                app:strokeColor="@color/surface_stroke" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabOnline"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="⚔️ 온라인 대전"
+                android:textSize="14sp"
+                app:strokeColor="@color/surface_stroke" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:text="스테이지 도전에서 가장 멀리 간 스테이지로 순위를 매겨요"
             android:textColor="@color/text_dim"
             android:textSize="13sp" />

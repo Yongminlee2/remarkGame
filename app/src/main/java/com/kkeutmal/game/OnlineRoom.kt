@@ -1,5 +1,6 @@
 package com.kkeutmal.game
 
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ServerValue
@@ -29,7 +30,11 @@ data class RoomSnap(
     /** uid → 이번 판에 쓴 아이템 종류 */
     val used: Map<String, Set<String>> = emptyMap(),
     /** uid → 지금 입력창에 쓰고 있는 글자 */
-    val typing: Map<String, String> = emptyMap()
+    val typing: Map<String, String> = emptyMap(),
+    /** 랜덤 매칭으로 찜한 사람. 친구 코드 방이면 null */
+    val invited: String? = null,
+    /** 결과를 적은 서버 시각(없으면 0) */
+    val resultAt: Long = 0L
 ) {
     fun opponentOf(uid: String): String? = if (uid == host) guest else host
 
@@ -86,7 +91,9 @@ data class RoomSnap(
                 typing = s.child("typing").children.mapNotNull { t ->
                     val text = t.getValue(String::class.java)
                     if (t.key != null && !text.isNullOrEmpty()) t.key!! to text else null
-                }.toMap()
+                }.toMap(),
+                invited = str("invited"),
+                resultAt = s.child("result").child("at").getValue(Long::class.java) ?: 0L
             )
         }
     }
@@ -341,5 +348,62 @@ object Ranking {
     /** 내 기록을 순위표에서 내린다. */
     fun removeMine(uid: String, onDone: () -> Unit) {
         ref().child(uid).removeValue().addOnCompleteListener { onDone() }
+    }
+
+    // ---------- 온라인 대전 순위 ----------
+
+    private fun onlineRef() = Online.db.getReference("onlineRanks")
+
+    /**
+     * 랜덤 매칭 판의 승패를 센다. **두 폰이 다 시도하고 먼저 닿은 쪽만 남는다** — 서버 규칙이
+     * 방마다 한 번(rankedRooms)만 받는다. 이긴 쪽이 앱을 바로 꺼도 진 쪽이 대신 센다.
+     * 세지 않을 판인지는 부르는 쪽에서 [OnlineRules.countsForRanking] 으로 거른다.
+     */
+    fun countOnline(code: String, winner: String, loser: String) {
+        val w = onlineRef().child(winner).child("wins").get()
+        val l = onlineRef().child(loser).child("losses").get()
+        Tasks.whenAllSuccess<DataSnapshot>(w, l).addOnSuccessListener { r ->
+            val wins = (r[0].getValue(Long::class.java) ?: 0L) + 1
+            val losses = (r[1].getValue(Long::class.java) ?: 0L) + 1
+            Online.db.reference.updateChildren(
+                mapOf(
+                    "rankedRooms/$code" to ServerValue.TIMESTAMP,
+                    "onlineRanks/$winner/wins" to wins,
+                    "onlineRanks/$winner/winAt" to ServerValue.TIMESTAMP,
+                    "onlineRanks/$winner/room" to code,
+                    "onlineRanks/$loser/losses" to losses,
+                    "onlineRanks/$loser/room" to code
+                )
+            )
+        }
+    }
+
+    /** 온라인 순위표에 보일지(올리기 동의)와 아바타. 승패 수는 서버가 세므로 여기서 안 건드린다. */
+    fun setOnlineShown(uid: String, shown: Boolean, avatar: String) {
+        onlineRef().child(uid).updateChildren(mapOf("show" to shown, "avatar" to avatar))
+    }
+
+    fun onlineTop(limit: Int, onResult: (List<OnlineRules.OnlineRankEntry>) -> Unit, onError: (String) -> Unit) {
+        onlineRef().orderByChild("wins").limitToLast(limit).get()
+            .addOnSuccessListener { s -> onResult(s.children.mapNotNull(::onlineEntry)) }
+            .addOnFailureListener { onError("순위를 불러오지 못했어요. 인터넷 연결을 확인해 주세요") }
+    }
+
+    fun onlineMine(uid: String, onResult: (OnlineRules.OnlineRankEntry?) -> Unit) {
+        onlineRef().child(uid).get()
+            .addOnSuccessListener { s -> onResult(onlineEntry(s)) }
+            .addOnFailureListener { onResult(null) }
+    }
+
+    private fun onlineEntry(c: DataSnapshot): OnlineRules.OnlineRankEntry? {
+        val key = c.key ?: return null
+        if (!c.exists()) return null
+        return OnlineRules.OnlineRankEntry(
+            uid = key,
+            avatar = c.child("avatar").getValue(String::class.java),
+            wins = c.child("wins").getValue(Long::class.java)?.toInt() ?: 0,
+            losses = c.child("losses").getValue(Long::class.java)?.toInt() ?: 0,
+            shown = c.child("show").getValue(Boolean::class.java) == true
+        )
     }
 }
